@@ -101,7 +101,10 @@ const Search = ({
 
         <Input
           ref={inputRef}
-          className={cn("pl-10 dark:bg-white", isLoading && "pr-12")}
+          className={cn(
+            "pl-10 bg-amber-50 dark:bg-white text-black",
+            isLoading && "pr-12"
+          )}
           placeholder={placeholder}
           value={query}
           onChange={handleInputChange}
@@ -112,14 +115,14 @@ const Search = ({
         />
 
         {isLoading && (
-          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4  animate-spin" />
         )}
 
         {query && !isLoading && (
           <button
             type="button"
             onClick={clearSearch}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+            className="absolute left-3 top-1/3 transform -translate-y-1/2 h-4  text-black w-4 hover:text-zinc-400"
             aria-label="Limpar busca"
           >
             ×
@@ -151,7 +154,7 @@ const Search = ({
         debouncedQuery &&
         formattedResults.length === 0 &&
         !isLoading && (
-          <div className="absolute top-full left-0 right-0 bg-background border border-border rounded-md shadow-lg mt-1 z-50 p-4 text-center text-muted-foreground">
+          <div className="absolute top-full left-0 right-0 bg-background border border-border rounded-md shadow-lg mt-1 z-50 p-4 text-center ">
             Nenhum resultado encontrado para "{debouncedQuery}"
           </div>
         )}
