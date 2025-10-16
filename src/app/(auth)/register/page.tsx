@@ -9,9 +9,9 @@ export default function RegisterPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
             <UserPlus className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Get started</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Começar</h1>
           <p className="text-muted-foreground">
-            Create your account to access all features
+            Crie sua conta para acessar todos os recursos
           </p>
         </div>
         <RegisterForm />

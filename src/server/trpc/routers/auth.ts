@@ -41,6 +41,62 @@ export const authRouter = router({
       return { success: true, session };
     }),
 
+  // Recuperação de senha - Solicitar OTP
+  forgetPassword: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const result = await auth.api.forgetPassword({
+          body: {
+            email: input.email,
+          },
+        });
+
+        return {
+          success: true,
+          message: "Código de verificação enviado para seu e-mail",
+        };
+      } catch (error) {
+        return {
+          success: false,
+          message: "Erro ao solicitar recuperação de senha",
+        };
+      }
+    }),
+
+  resetPassword: publicProcedure
+    .input(
+      z.object({
+        token: z.string().min(1, "Token é obrigatório"),
+        newPassword: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const result = await auth.api.resetPassword({
+          body: {
+            token: input.token,
+            newPassword: input.newPassword,
+          },
+        });
+
+        return {
+          success: true,
+          message: "Senha redefinida com sucesso",
+        };
+      } catch (error) {
+        console.error("Erro ao redefinir senha:", error);
+        return {
+          success: false,
+          message: "Token inválido ou expirado",
+        };
+      }
+    }),
+
   signOut: protectedProcedure.mutation(async ({ ctx }) => {
     await auth.api.signOut({
       headers: new Headers(),

@@ -8,15 +8,20 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean        @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
+  Order         Order[]
+  Address       Address[]
+  Review        Review[]
+  WishlistItem  WishlistItem[]
+  CartItem      CartItem[]
 
   @@unique([email])
   @@map("user")
@@ -65,4 +70,357 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  price        Float
+  comparePrice Float?
+  thumbnail    String?
+  costPrice    Float?
+  content      String
+  slug         String   @unique
+  barcode      String?
+  weight       Float?
+  height       Float?
+  width        Float?
+  depth        Float?
+  stock        Int      @default(0)
+  trackStock   Boolean  @default(true)
+  isActive     Boolean  @default(true)
+  isFeatured   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  categoryId String
+  category   Category           @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  variants   ProductVariant[]
+  attributes ProductAttribute[]
+  reviews    Review[]
+  discounts  DiscountProduct[]
+  wishlist   WishlistItem[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  slug        String   @unique
+  image       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@map("categories")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  name      String
+  sku       String?  @unique
+  price     Float?
+  stock     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  sizeId  String?
+  size    Size?   @relation(fields: [sizeId], references: [id])
+  colorId String?
+  color   Color?  @relation(fields: [colorId], references: [id])
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@map("product_variants")
+}
+
+model Size {
+  id        String   @id @default(cuid())
+  name      String // Ex: "P", "M", "G", "GG"
+  value     String? // Ex: "Pequeno", "Médio"
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  // Relações
+  variants ProductVariant[]
+
+  @@map("sizes")
+}
+
+model Color {
+  id        String   @id @default(cuid())
+  name      String // Ex: "Vermelho", "Azul"
+  value     String // Ex: "#FF0000" (hex)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  // Relações
+  variants ProductVariant[]
+
+  @@map("colors")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String
+  altText   String?
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("product_images")
+}
+
+model ProductAttribute {
+  id        String   @id @default(cuid())
+  name      String // Ex: "Material", "Marca"
+  value     String // Ex: "Algodão", "Nike"
+  createdAt DateTime @default(now())
+
+  // Relações
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("product_attributes")
+}
+
+model Discount {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  code        String?      @unique
+  type        DiscountType @default(PERCENTAGE)
+  value       Float
+  minAmount   Float?
+  maxDiscount Float?
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean      @default(true)
+  usageLimit  Int?
+  usedCount   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relações
+  products DiscountProduct[]
+  orders   Order[]
+
+  @@map("discounts")
+}
+
+model DiscountProduct {
+  id String @id @default(cuid())
+
+  // Relações
+  discountId String
+  discount   Discount @relation(fields: [discountId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@unique([discountId, productId])
+  @@map("discount_products")
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique
+  status         OrderStatus @default(PENDING)
+  totalAmount    Float
+  discountAmount Float       @default(0)
+  shippingAmount Float       @default(0)
+  finalAmount    Float
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  paidAt         DateTime?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+
+  // Relações
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  shippingAddressId String
+  shippingAddress   Address       @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId  String
+  billingAddress    Address       @relation("OrderBillingAddress", fields: [billingAddressId], references: [id])
+  paymentMethodId   String
+  paymentMethod     PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+  discountId        String?
+  discount          Discount?     @relation(fields: [discountId], references: [id])
+  orderItems        OrderItem[]
+  payments          Payment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  quantity   Int
+  unitPrice  Float
+  totalPrice Float
+  createdAt  DateTime @default(now())
+
+  // Relações
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("order_items")
+}
+
+model PaymentMethod {
+  id          String   @id @default(cuid())
+  name        String // Ex: "Cartão de Crédito", "PIX", "Boleto"
+  description String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  orders   Order[]
+  payments Payment[]
+
+  @@map("payment_methods")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  amount        Float
+  status        PaymentStatus @default(PENDING)
+  processor     String?
+  transactionId String?
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  orderId         String
+  order           Order         @relation(fields: [orderId], references: [id])
+  paymentMethodId String
+  paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@map("payments")
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  zipCode      String
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  country      String   @default("Brasil")
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  shippingOrders Order[] @relation("OrderShippingAddress")
+  billingOrders  Order[] @relation("OrderBillingAddress")
+
+  @@map("addresses")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  rating     Int // 1-5
+  comment    String?
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("reviews")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@unique([userId, productId, variantId])
+  @@map("cart_items")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
 }

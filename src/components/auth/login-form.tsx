@@ -70,7 +70,7 @@ export function LoginForm() {
           Sign in
         </CardTitle>
         <CardDescription className="text-muted-foreground">
-          Enter your email and password to access your account
+          Digite seu e-mail e senha para acessar sua conta
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -103,25 +103,39 @@ export function LoginForm() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Signing in...
-              </>
-            ) : (
-              "Sign in"
-            )}
-          </Button>
-          <p className="text-sm text-muted-foreground text-center">
-            Don't have an account?{" "}
-            <Link
-              href="/register"
-              className="text-foreground hover:underline font-medium"
-            >
-              Sign up
-            </Link>
-          </p>
+          <div className="mt-6 w-full">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Signing in...
+                </>
+              ) : (
+                "Login"
+              )}
+            </Button>
+          </div>
+
+          <div className="">
+            <p className="text-sm text-muted-foreground text-center">
+              Não tem uma conta?{" "}
+              <Link
+                href="/register"
+                className="text-foreground hover:underline font-medium"
+              >
+                Registro
+              </Link>
+            </p>
+            <p className="text-sm text-muted-foreground text-center">
+              Esqueci a senha?{" "}
+              <Link
+                href="/forget-password"
+                className="text-foreground hover:underline font-medium"
+              >
+                Reset senha
+              </Link>
+            </p>
+          </div>
         </CardFooter>
       </form>
     </Card>

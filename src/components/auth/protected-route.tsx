@@ -5,13 +5,13 @@ import { useSession } from "../../hooks/use-session";
 import { Spinner } from "../ui/spinner";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, isAuthenticated } = useSession();
+  const { user, isLoading } = useSession();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !user) {
       window.location.href = "/login";
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, user]);
 
   if (isLoading) {
     return (
@@ -21,7 +21,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return null;
   }
 
