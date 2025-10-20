@@ -1,6 +1,4 @@
 import { db } from "@/lib/prisma";
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
 import {
   type DeleteProductInput,
   type ToggleProductStatusInput,
@@ -14,13 +12,14 @@ import {
   productMutationOutput,
   toggleProductStatusInput,
   updateProductInput,
-} from "../../../../lib/schemas/product-schemas";
+} from "@/lib/schemas/product-schemas";
+import { TRPCError } from "@trpc/server";
+import { object, z } from "zod";
 import { publicProcedure, router } from "../../init";
 
 export const productRouter = router({
   getProducts: publicProcedure
     .input(getProductsInput)
-    .output(productListOutput)
     .query(async ({ input }) => {
       try {
         const {
@@ -34,6 +33,7 @@ export const productRouter = router({
           maxPrice,
           inStock,
           search,
+          thumbnail,
           sortBy = "createdAt",
           sortOrder = "desc",
         } = input;
@@ -65,11 +65,6 @@ export const productRouter = router({
         }
 
         if (search) {
-          // where.OR = [
-          //   { title: { contains: search, mode: "insensitive" as const } },
-          //   { description: { contains: search, mode: "insensitive" as const } },
-          // ];
-
           where.OR = [
             { title: { contains: search, mode: "insensitive" as const } },
             { description: { contains: search, mode: "insensitive" as const } },
@@ -77,19 +72,88 @@ export const productRouter = router({
           ];
         }
 
-        const products = await db.product.findMany({
-          where,
-          skip: (page - 1) * limit,
-          take: limit,
-          orderBy: {
-            [sortBy]: sortOrder,
-          },
-          include: {
-            images: {
-              orderBy: {
-                sortOrder: "asc",
+        const [products, totalCount] = await Promise.all([
+          db.product.findMany({
+            where,
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: {
+              [sortBy]: sortOrder,
+            },
+            include: {
+              images: {
+                orderBy: {
+                  sortOrder: "asc",
+                },
+              },
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+              variants: {
+                where: {
+                  isActive: true,
+                },
+                include: {
+                  size: true,
+                  color: true,
+                },
+              },
+              attributes: true,
+              _count: {
+                select: {
+                  reviews: true,
+                  wishlist: true,
+                },
               },
             },
+          }),
+          db.product.count({ where }),
+        ]);
+
+        const totalPages = Math.ceil(totalCount / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+
+        return {
+          products,
+          pagination: {
+            totalCount,
+            totalPages,
+            currentPage: page,
+            hasNextPage,
+            hasPrevPage,
+            limit,
+          },
+        };
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erro ao buscar os produtos",
+        });
+      }
+    }),
+  getProductsLimits: publicProcedure
+    .input(
+      object({
+        limit: z.number().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        const limit = input.limit;
+
+        const products = await db.product.findMany({
+          take: limit || 3,
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            images: true,
             category: {
               select: {
                 id: true,
@@ -97,31 +161,16 @@ export const productRouter = router({
                 slug: true,
               },
             },
-            variants: {
-              where: {
-                isActive: true,
-              },
-              include: {
-                size: true,
-                color: true,
-              },
-            },
-            attributes: true,
-            _count: {
-              select: {
-                reviews: true,
-                wishlist: true,
-              },
-            },
           },
         });
 
         return products;
       } catch (error) {
-        console.error("Error fetching products:", error);
+        if (error instanceof TRPCError) throw error;
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Erro ao buscar os produtos",
+          message: "Erro ao buscar os produtos por limites",
         });
       }
     }),
@@ -197,7 +246,6 @@ export const productRouter = router({
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 
-        console.error("Error fetching product:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erro ao buscar o produto",

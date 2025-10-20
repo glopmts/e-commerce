@@ -35,7 +35,7 @@ const Header = () => {
   const formattedName = formatUserName(user?.name);
 
   return (
-    <header className="w-full h-auto p-2 sticky top-0 bg-amber-300 border-b ">
+    <header className="w-full h-auto p-2 sticky top-0 bg-amber-300 border-b z-30">
       <nav className="w-full h-full items-center flex justify-between max-w-6xl mx-auto">
         <div className="">
           <Link href="/" className="flex items-center gap-2 text-gray-800">
