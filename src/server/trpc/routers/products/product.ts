@@ -7,7 +7,6 @@ import {
   getProductBySlugInput,
   getProductsInput,
   productCountOutput,
-  productDetailOutput,
   productListOutput,
   productMutationOutput,
   toggleProductStatusInput,
@@ -177,9 +176,15 @@ export const productRouter = router({
 
   getProductBySlug: publicProcedure
     .input(getProductBySlugInput)
-    .output(productDetailOutput)
     .query(async ({ input }) => {
       try {
+        if (!input.slug) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Slug do produto é obrigatório",
+          });
+        }
+
         const product = await db.product.findUnique({
           where: { slug: input.slug },
           include: {

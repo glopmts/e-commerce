@@ -10,8 +10,9 @@ import { trpc } from "../../server/trpc/client";
 import { formatUserName } from "../../utils/format-name";
 import { ModeToggle } from "../ModeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
-import CartItem from "./CartItems";
+import CartItem from "./Cart-Items";
 import Search from "./Search";
 
 const Links = [
@@ -62,19 +63,23 @@ const Header = () => {
             <div className="w-9 h-9 flex items-center justify-center">
               <Spinner className="size-6" />
             </div>
-          ) : (
+          ) : user?.id ? (
             <Avatar className={cn("w-10 h-10")}>
               <AvatarImage src={user?.image || ""} />
               <AvatarFallback className="bg-amber-600 border border-amber-800">
                 {user?.name.charAt(0) || "G"}
               </AvatarFallback>
             </Avatar>
+          ) : (
+            <Button asChild>
+              <Link href="/login">Entrar</Link>
+            </Button>
           )}
         </div>
       </nav>
       <div className="flex justify-between items-center max-w-6xl mx-auto mt-4">
         <div className="">
-          {isLoading ? (
+          {isLoading || loaderUser ? (
             <Spinner className="size-6" />
           ) : (
             addresses.map((address) => (

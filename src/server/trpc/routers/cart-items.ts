@@ -74,6 +74,76 @@ export const cartRoute = router({
         });
       }
     }),
+  // Adicione esta procedure no seu router cartRoute
+  addOrUpdateCart: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        productId: z.string(),
+        quantity: z.number().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const { userId, productId, quantity } = input;
+
+        const product = await db.product.findUnique({
+          where: { id: productId },
+          select: { stock: true, isActive: true },
+        });
+
+        if (!product) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Produto não encontrado",
+          });
+        }
+
+        if (!product.isActive || product.stock < quantity) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Produto indisponível ou estoque insuficiente",
+          });
+        }
+
+        const existingItem = await db.cartItem.findFirst({
+          where: {
+            userId,
+            productId,
+          },
+        });
+
+        let cartItem;
+
+        if (existingItem) {
+          cartItem = await db.cartItem.update({
+            where: { id: existingItem.id },
+            data: { quantity },
+          });
+        } else {
+          cartItem = await db.cartItem.create({
+            data: {
+              userId,
+              productId,
+              quantity,
+            },
+          });
+        }
+
+        return {
+          status: 200,
+          cartItem,
+          action: existingItem ? "updated" : "created",
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Falha ao atualizar carrinho",
+        });
+      }
+    }),
   existingProductCart: publicProcedure
     .input(
       z.object({

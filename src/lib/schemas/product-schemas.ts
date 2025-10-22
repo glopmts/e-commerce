@@ -279,7 +279,7 @@ export const getProductByIdInput = z.object({
 });
 
 export const getProductBySlugInput = z.object({
-  slug: z.string(),
+  slug: z.string().min(1, "Slug é obrigatório"),
 });
 
 export const createProductInput = createProductSchema;

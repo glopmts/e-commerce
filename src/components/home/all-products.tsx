@@ -7,7 +7,7 @@ import { Spinner } from "../ui/spinner";
 
 const AllProducts = () => {
   const {
-    data: products,
+    data: productsData,
     isLoading,
     error,
   } = trpc.product.getProducts.useQuery({
@@ -17,6 +17,8 @@ const AllProducts = () => {
   const { data: user, isLoading: loaderUser } =
     trpc.user.getCurrentUser.useQuery();
   const userId = user?.id as string;
+
+  const products = productsData?.products || [];
 
   if (isLoading || loaderUser) {
     return (
