@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import Header from "../components/header/Header";
 import { ThemeProvider } from "../components/theme-provider";
 import { SessionProvider } from "../hooks/use-session";
+import { UploadThingProvider } from "../providers/uploadthing";
 import "./globals.css";
 import { TRPCProvider } from "./providers";
 
@@ -41,10 +42,12 @@ export default function RootLayout({
           {" "}
           <TRPCProvider>
             <SessionProvider>
-              <main className="w-full min-h-svh h-full">
-                <Header />
-                {children}
-              </main>
+              <UploadThingProvider>
+                <main className="w-full min-h-svh h-full">
+                  <Header />
+                  {children}
+                </main>
+              </UploadThingProvider>
             </SessionProvider>
             <Toaster />
           </TRPCProvider>

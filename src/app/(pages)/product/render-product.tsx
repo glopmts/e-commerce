@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductImageGallery } from "@/components/product/imagens-details";
+import PaymentMethods from "@/components/product/PaymentMethods";
 import { ProductActions } from "@/components/product/ProductActions";
 import { ProductAttributes } from "@/components/product/ProductAttributes";
 import { ProductContent } from "@/components/product/ProductContent";
@@ -9,11 +10,13 @@ import { ProductPricingDetails } from "@/components/product/ProductPricingDetail
 import { ProductSpecifications } from "@/components/product/ProductSpecifications";
 import { ProductStock } from "@/components/product/ProductStock";
 import { ProductVariants } from "@/components/product/ProductVariants";
+import FormReview from "@/components/reviews/form-review";
+import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { trpc } from "@/server/trpc/client";
 import { useParams } from "next/navigation";
-import PaymentMethods from "../../../components/product/PaymentMethods";
-import { Separator } from "../../../components/ui/separator";
+import { useReviews } from "../../../hooks/use-reviews";
+import { User } from "../../../types/interfaces";
 
 const RenderProduct = () => {
   const { slug } = useParams();
@@ -29,8 +32,19 @@ const RenderProduct = () => {
     trpc.user.getCurrentUser.useQuery();
 
   const userId = user?.id as string;
+  const {
+    reviews,
+    isLoading: isLoadingReviews,
+    error: reviewsError,
+    hasReview,
+    isLoadingHasReview,
+    isCreating,
+    isDeleting,
+    createReview,
+    removeReview,
+  } = useReviews({ productId: product?.id!, userId });
 
-  if (isLoading || loaderUser) {
+  if (isLoading || loaderUser || isLoadingReviews || isLoadingHasReview) {
     return (
       <div className="flex h-96 w-full items-center justify-center bg-banner">
         <Spinner className="size-9" />
@@ -108,8 +122,28 @@ const RenderProduct = () => {
               <PaymentMethods />
             </div>
           </div>
-          <div className="flex w-full flex-col-reverse  md:flex-row items-baseline gap-8 pt-10">
+          <div className="flex w-full flex-col-reverse  md:flex-row items-baseline md:justify-between gap-8 pt-10">
             {product.content && <ProductContent content={product.content} />}
+            <div className=""></div>
+          </div>
+          <div className="mt-9">
+            {hasReview ? (
+              <div className="">
+                <h2 className="mb-4 text-2xl font-semibold">Sua Avaliação</h2>
+                <div className="rounded-lg border p-4">
+                  <p className="mb-2">Você já avaliou este produto.</p>
+                </div>
+              </div>
+            ) : (
+              <FormReview
+                user={user as User}
+                isCreating={isCreating}
+                isDeleting={isDeleting}
+                onSubmit={createReview}
+                imageUrlProduct={product.thumbnail || null}
+                nameProduct={product.title || null}
+              />
+            )}
           </div>
         </div>
       </div>

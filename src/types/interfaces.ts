@@ -42,3 +42,12 @@ export interface Product {
   createdAt: Date | string;
   updatedAt: Date | string;
 }
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
