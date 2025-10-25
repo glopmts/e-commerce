@@ -51,3 +51,16 @@ export interface User {
   createdAt: Date | string;
   updatedAt: Date | string;
 }
+
+export interface Reviews {
+  id: string;
+  rating: number;
+  comment: string | null;
+  images: string[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  userId: string;
+  isApproved: boolean;
+  productId: string;
+}
+[];

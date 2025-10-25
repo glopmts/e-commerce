@@ -11,12 +11,13 @@ import { ProductSpecifications } from "@/components/product/ProductSpecification
 import { ProductStock } from "@/components/product/ProductStock";
 import { ProductVariants } from "@/components/product/ProductVariants";
 import FormReview from "@/components/reviews/form-review";
+import RenderReviews from "@/components/reviews/reviews-render";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { useReviews } from "@/hooks/use-reviews";
 import { trpc } from "@/server/trpc/client";
+import { User } from "@/types/interfaces";
 import { useParams } from "next/navigation";
-import { useReviews } from "../../../hooks/use-reviews";
-import { User } from "../../../types/interfaces";
 
 const RenderProduct = () => {
   const { slug } = useParams();
@@ -129,10 +130,12 @@ const RenderProduct = () => {
           <div className="mt-9">
             {hasReview ? (
               <div className="">
-                <h2 className="mb-4 text-2xl font-semibold">Sua Avaliação</h2>
-                <div className="rounded-lg border p-4">
-                  <p className="mb-2">Você já avaliou este produto.</p>
-                </div>
+                <RenderReviews
+                  reviews={reviews}
+                  userId={userId}
+                  titleProduct={product.title}
+                  handleDelete={removeReview}
+                />
               </div>
             ) : (
               <FormReview

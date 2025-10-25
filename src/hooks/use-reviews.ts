@@ -51,6 +51,10 @@ export const useReviews = ({ productId, userId }: ReviewData) => {
 
   const removeReview = useCallback(
     async (id: string) => {
+      const confirmed = window.confirm(
+        "Tem certeza que deseja deletar esta avaliação?"
+      );
+      if (!confirmed) return;
       return await deleteReview.mutateAsync({ reviewId: id, userId });
     },
     [deleteReview, productId, userId]

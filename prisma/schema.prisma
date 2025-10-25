@@ -22,6 +22,7 @@ model User {
   Review        Review[]
   WishlistItem  WishlistItem[]
   CartItem      CartItem[]
+  LikeReview    LikeReview[]
 
   @@unique([email])
   @@map("user")
@@ -358,12 +359,26 @@ model Review {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  userId    String
-  user      User    @relation(fields: [userId], references: [id])
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
+  userId     String
+  user       User         @relation(fields: [userId], references: [id])
+  productId  String
+  product    Product      @relation(fields: [productId], references: [id])
+  LikeReview LikeReview[]
 
   @@map("reviews")
+}
+
+model LikeReview {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviewId String
+  review   Review @relation(fields: [reviewId], references: [id])
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@map("like_reviews")
 }
 
 model WishlistItem {

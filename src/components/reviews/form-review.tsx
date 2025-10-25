@@ -26,6 +26,7 @@ type FormReviewProps = {
   nameProduct?: string | null;
   isCreating?: boolean;
   isDeleting?: boolean;
+  type?: "create" | "edit";
 };
 
 const FormReview = ({
