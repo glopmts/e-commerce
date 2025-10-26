@@ -7,10 +7,12 @@ import type { Reviews } from "@/types/interfaces";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import LikeReview from "./like-review";
 
 type Props = {
   reviews: Reviews[];
   open?: boolean;
+  userId: string;
   openChange: () => void;
   initialReviewIndex?: number;
 };
@@ -18,6 +20,7 @@ type Props = {
 const FullScreenReview = ({
   reviews,
   open,
+  userId,
   openChange,
   initialReviewIndex = 0,
 }: Props) => {
@@ -167,14 +170,7 @@ const FullScreenReview = ({
               )}
 
               {/* Helpful Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 bg-transparent"
-              >
-                <span>É útil</span>
-                <span className="flex items-center gap-1">👍 1</span>
-              </Button>
+              <LikeReview userId={userId} reviewId={currentReview.id} />
             </div>
 
             {/* Thumbnail Strip */}

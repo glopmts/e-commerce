@@ -25,6 +25,7 @@ import { Card, CardContent } from "../ui/card";
 import { Progress } from "../ui/progress";
 import { ScrollArea } from "../ui/scroll-area";
 import FullScreenReview from "./full-screen-review";
+import LikeReview from "./like-review";
 
 type RenderReviewsProps = {
   reviews: Reviews[];
@@ -255,8 +256,9 @@ const RenderReviews = ({
                         </div>
                       </div>
                       <div className="w-full h-auto flex justify-between items-center mt-3">
-                        <div className="">
+                        <div className="flex flex-col gap-2">
                           <p className="text-sm">{review.comment}</p>
+                          <LikeReview userId={userId} reviewId={review.id} />
                         </div>
                         <div className="">
                           <DropdownMenuReviews
@@ -282,6 +284,7 @@ const RenderReviews = ({
         <FullScreenReview
           openChange={() => setOpenMenu(false)}
           open={openMenu}
+          userId={userId}
           reviews={sortedReviews}
           initialReviewIndex={selectedReviewIndex}
         />

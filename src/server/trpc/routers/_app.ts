@@ -3,6 +3,7 @@ import { addressRouter } from "./address";
 import { authRouter } from "./auth";
 import { cartRoute } from "./cart-items";
 import { categoryRouter } from "./products/category";
+import { likeReviewRoute } from "./products/like-review";
 import { productRouter } from "./products/product";
 import { reviewRouter } from "./products/review";
 import { userRouter } from "./user";
@@ -17,6 +18,7 @@ export const appRouter = t.router({
   address: addressRouter,
   category: categoryRouter,
   review: reviewRouter,
+  likeReview: likeReviewRoute,
 });
 
 export type AppRouter = typeof appRouter;
