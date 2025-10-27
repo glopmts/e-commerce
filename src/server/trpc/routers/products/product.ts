@@ -4,6 +4,7 @@ import {
   type ToggleProductStatusInput,
   createProductInput,
   deleteProductInput,
+  getProductByIdInput,
   getProductBySlugInput,
   getProductsInput,
   productCountOutput,
@@ -187,6 +188,90 @@ export const productRouter = router({
 
         const product = await db.product.findUnique({
           where: { slug: input.slug },
+          include: {
+            images: {
+              orderBy: {
+                sortOrder: "asc",
+              },
+            },
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                isActive: true,
+              },
+            },
+            variants: {
+              include: {
+                size: true,
+                color: true,
+              },
+              orderBy: {
+                name: "asc",
+              },
+            },
+            attributes: {
+              orderBy: {
+                name: "asc",
+              },
+            },
+            reviews: {
+              where: {
+                isApproved: true,
+              },
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+              orderBy: {
+                createdAt: "desc",
+              },
+            },
+            _count: {
+              select: {
+                wishlist: true,
+                reviews: true,
+              },
+            },
+          },
+        });
+
+        if (!product) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Produto não encontrado",
+          });
+        }
+
+        return product;
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erro ao buscar o produto",
+        });
+      }
+    }),
+
+  getProductById: publicProcedure
+    .input(getProductByIdInput)
+    .query(async ({ input }) => {
+      try {
+        if (!input.id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Id do produto é obrigatório",
+          });
+        }
+
+        const product = await db.product.findUnique({
+          where: { id: input.id },
           include: {
             images: {
               orderBy: {

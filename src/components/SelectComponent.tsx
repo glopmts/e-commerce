@@ -20,6 +20,7 @@ export type SelectComponentProps = {
   label?: string;
   disabled?: boolean;
   className?: string;
+  required?: boolean;
   size?: "sm" | "md" | "lg";
 };
 
@@ -29,6 +30,7 @@ const SelectComponent = ({
   placeholder = "Selecione uma opção",
   options,
   label,
+  required,
   disabled = false,
   className,
   size = "md",
@@ -39,11 +41,14 @@ const SelectComponent = ({
     lg: "h-12 text-lg",
   };
 
+  const validOptions = options.filter((option) => option.value !== "");
+
   return (
     <div className="flex flex-col gap-2">
       {label && (
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       <Select onValueChange={onValueChange} value={value} disabled={disabled}>
@@ -51,7 +56,7 @@ const SelectComponent = ({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((option) => (
+          {validOptions.map((option) => (
             <SelectItem
               key={option.value}
               value={option.value}

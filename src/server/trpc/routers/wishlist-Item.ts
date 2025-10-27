@@ -7,21 +7,21 @@ const t = initTRPC.create();
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
-export const likeReviewRoute = router({
-  getLike: publicProcedure
-    .input(z.object({ reviewId: z.string() }))
+export const favoriteRoute = router({
+  getFavorite: publicProcedure
+    .input(z.object({ userId: z.string() }))
     .query(async ({ ctx, input }) => {
       try {
-        const reviewId = input.reviewId;
+        const userId = input.userId;
 
-        if (!reviewId) {
+        if (!userId) {
           return [];
         }
 
-        const likes = await db.likeReview.findMany({
-          where: { reviewId },
+        const likes = await db.wishlistItem.findMany({
+          where: { userId },
           include: {
-            review: true,
+            product: true,
           },
         });
 
@@ -29,13 +29,13 @@ export const likeReviewRoute = router({
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Erro ao buscar like review",
+          message: "Erro ao buscar favorite",
         });
       }
     }),
 
-  addLikeReview: publicProcedure
-    .input(z.object({ reviewId: z.string(), userId: z.string() }))
+  addFavorite: publicProcedure
+    .input(z.object({ productId: z.string(), userId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       try {
         const userId = input.userId;
@@ -47,37 +47,38 @@ export const likeReviewRoute = router({
           });
         }
 
-        const existingLikeReview = await db.likeReview.findFirst({
+        const existingFavorite = await db.wishlistItem.findFirst({
           where: {
             userId,
-            reviewId: input.reviewId,
+            productId: input.productId,
           },
         });
 
-        if (existingLikeReview) {
-          return existingLikeReview;
+        if (existingFavorite) {
+          return existingFavorite;
         }
 
-        const newLike = await db.likeReview.create({
+        // Cria novo favorite
+        const newFavorite = await db.wishlistItem.create({
           data: {
             userId,
-            reviewId: input.reviewId,
+            productId: input.productId,
           },
         });
 
-        return newLike;
+        return newFavorite;
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Erro ao adicionar Like review: ${
+          message: `Erro ao adicionar aos favorites: ${
             error instanceof Error ? error.message : "Erro desconhecido"
           }`,
         });
       }
     }),
 
-  existingLikeReview: publicProcedure
-    .input(z.object({ reviewId: z.string(), userId: z.string() }))
+  existingFavorite: publicProcedure
+    .input(z.object({ productId: z.string(), userId: z.string() }))
     .query(async ({ input, ctx }) => {
       try {
         const userId = input.userId;
@@ -86,21 +87,21 @@ export const likeReviewRoute = router({
           return false;
         }
 
-        const existingLikeReview = await db.likeReview.findFirst({
+        const existingFavorite = await db.wishlistItem.findFirst({
           where: {
             userId,
-            reviewId: input.reviewId,
+            productId: input.productId,
           },
         });
 
-        return !!existingLikeReview;
+        return !!existingFavorite;
       } catch (error) {
         return false;
       }
     }),
 
   removeLikeReview: publicProcedure
-    .input(z.object({ reviewId: z.string(), userId: z.string() }))
+    .input(z.object({ productId: z.string(), userId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       try {
         const userId = input.userId;
@@ -112,28 +113,28 @@ export const likeReviewRoute = router({
           });
         }
 
-        const existingLikeReview = await db.likeReview.findFirst({
+        const existingFavorite = await db.wishlistItem.findFirst({
           where: {
             userId,
-            reviewId: input.reviewId,
+            productId: input.productId,
           },
         });
 
-        if (!existingLikeReview) {
-          return { success: true, message: "Like review não existia" };
+        if (!existingFavorite) {
+          return { success: true, message: "Favorite não existia" };
         }
 
         await db.likeReview.delete({
           where: {
-            id: existingLikeReview.id,
+            id: existingFavorite.id,
           },
         });
 
-        return { success: true, message: "Removido dos like review" };
+        return { success: true, message: "Removido dos aos favorites" };
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Erro ao remover like review: ${
+          message: `Erro ao remover aos favorites: ${
             error instanceof Error ? error.message : "Erro desconhecido"
           }`,
         });
