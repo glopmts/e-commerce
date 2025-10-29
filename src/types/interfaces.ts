@@ -1,3 +1,5 @@
+import { PaymentMethodEnum } from "@prisma/client";
+
 export interface Images {
   id: string;
   createdAt: Date | string;
@@ -64,3 +66,24 @@ export interface Reviews {
   productId: string;
 }
 [];
+
+export interface Address {
+  id: string;
+  street: string;
+  number: string;
+  complement?: string | null;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  typePayment: PaymentMethodEnum;
+  description?: string | null;
+  icon: string;
+}

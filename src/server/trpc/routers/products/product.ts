@@ -325,6 +325,12 @@ export const productRouter = router({
           },
         });
 
+        const productFillter = await db.product.findUnique({
+          where: {
+            id: input.id,
+          },
+        });
+
         if (!product) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -332,7 +338,10 @@ export const productRouter = router({
           });
         }
 
-        return product;
+        return {
+          ...product,
+          productFillter,
+        };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
 

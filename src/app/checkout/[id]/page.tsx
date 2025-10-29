@@ -5,32 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/server/trpc/client";
 import { PaymentMethodEnum } from "@prisma/client";
-import { Check, MapPin, Plus } from "lucide-react";
+import { MapPin, Plus } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import AddressInforCheckout from "../../../components/checkout/address-infor";
+import PaymentMethodCheckout from "../../../components/checkout/payment-method";
 import { Separator } from "../../../components/ui/separator";
-
-interface PaymentMethod {
-  id: string;
-  name: string;
-  typePayment: PaymentMethodEnum;
-  description?: string | null;
-  icon: string;
-}
-
-interface Address {
-  id: string;
-  street: string;
-  number: string;
-  complement?: string | null;
-  neighborhood: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  isDefault: boolean;
-}
+import { Address, PaymentMethod } from "../../../types/interfaces";
 
 const CheckoutUniqProduct = () => {
   const { id } = useParams();
@@ -56,6 +38,9 @@ const CheckoutUniqProduct = () => {
     const defaultAddress = addresses.find((addr) => addr.isDefault);
     return defaultAddress?.id || addresses[0]?.id || "";
   });
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const [paymentMethodId, setPaymentMethodId] = useState("");
   const [discountCode, setDiscountCode] = useState("");
@@ -63,7 +48,6 @@ const CheckoutUniqProduct = () => {
     PaymentMethodEnum | ""
   >("");
 
-  // Funções auxiliares para pagamento
   const getPaymentMethodIcon = (type: PaymentMethodEnum): string => {
     const icons = {
       [PaymentMethodEnum.PIX]:
@@ -77,15 +61,6 @@ const CheckoutUniqProduct = () => {
       icons[type] ||
       "https://http2.mlstatic.com/storage/logos-api-admin/9cf818e0-723a-11f0-a459-cf21d0937aeb-m.svg"
     );
-  };
-
-  const getPaymentMethodDescription = (type: PaymentMethodEnum): string => {
-    const descriptions = {
-      [PaymentMethodEnum.PIX]: "Pagamento instantâneo e seguro",
-      [PaymentMethodEnum.CARD]: "Parcelamento em até 12x",
-      [PaymentMethodEnum.TICKET]: "Pague em qualquer agência bancária",
-    };
-    return descriptions[type] || "Método de pagamento seguro";
   };
 
   // Processar métodos de pagamento
@@ -127,7 +102,6 @@ const CheckoutUniqProduct = () => {
     setShippingAddressId(addressId);
   };
 
-  // Função para formatar endereço
   const formatAddress = (address: Address) => {
     const parts = [
       `${address.street}, ${address.number}`,
@@ -140,7 +114,7 @@ const CheckoutUniqProduct = () => {
     return parts.join(" • ");
   };
 
-  // Função para finalizar a compra
+  // Função para finalizar a compra via cartão credito
   const handleCheckout = async () => {
     if (!shippingAddressId || !paymentMethodId) {
       alert("Por favor, selecione o endereço de entrega e método de pagamento");
@@ -156,20 +130,29 @@ const CheckoutUniqProduct = () => {
         userId,
       });
 
-      // TODO: Implementar mutation do tRPC para criar pedido
-      // await trpc.order.create.useMutation().mutateAsync({
-      //   productId: id as string,
-      //   shippingAddressId,
-      //   paymentMethodId,
-      //   discountCode: discountCode || undefined,
-      //   quantity: 1,
-      // });
-
       alert("Pedido realizado com sucesso!");
-      router.push("/orders");
     } catch (error) {
       console.error("Erro ao finalizar compra:", error);
       alert("Erro ao finalizar compra. Tente novamente.");
+    }
+  };
+
+  const productFillter = product?.productFillter;
+
+  const handlePixPayment = async () => {
+    if (!id || isNavigating || !userId) return;
+
+    setIsNavigating(true);
+    try {
+      router.push(
+        `/checkout/pix?product=${encodeURIComponent(
+          JSON.stringify(productFillter)
+        )}&subtotal=${
+          productFillter?.price
+        }&quantity=${selectedQuantity}&shippingAddress=${shippingAddressId}&paymentMethod=${paymentMethodId}`
+      );
+    } finally {
+      setIsNavigating(false);
     }
   };
 
@@ -272,43 +255,10 @@ const CheckoutUniqProduct = () => {
                   } ${address.isDefault ? "ring-1 ring-blue-300" : ""}`}
                   onClick={() => handleAddressSelect(address.id)}
                 >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`flex-shrink-0 w-5 h-5 mt-1 rounded-full border-2 flex items-center justify-center ${
-                        shippingAddressId === address.id
-                          ? "bg-blue-500 border-blue-500"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      {shippingAddressId === address.id && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-medium">
-                          {address.street}, {address.number}
-                        </span>
-                        {address.isDefault && (
-                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                            Padrão
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                        {address.complement && (
-                          <div>Complemento: {address.complement}</div>
-                        )}
-                        <div>Bairro: {address.neighborhood}</div>
-                        <div>
-                          {address.city} - {address.state}, {address.zipCode}
-                        </div>
-                        <div>{address.country}</div>
-                      </div>
-                    </div>
-                  </div>
+                  <AddressInforCheckout
+                    address={address}
+                    shippingAddressId={shippingAddressId}
+                  />
                 </div>
               ))}
             </div>
@@ -347,59 +297,11 @@ const CheckoutUniqProduct = () => {
 
             {/* Lista de Métodos de Pagamento */}
             <div className="space-y-3">
-              {filteredPaymentMethods.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Nenhum método de pagamento disponível
-                  </p>
-                </div>
-              ) : (
-                filteredPaymentMethods.map((method) => (
-                  <div
-                    key={method.id}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      paymentMethodId === method.id
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                    onClick={() => handlePaymentMethodSelect(method.id)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 relative flex-shrink-0">
-                        <Image
-                          src={method.icon}
-                          alt={method.name}
-                          fill
-                          className="object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "https://via.placeholder.com/48";
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{method.name}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {getPaymentMethodDescription(method.typePayment)}
-                        </p>
-                      </div>
-
-                      <div
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          paymentMethodId === method.id
-                            ? "bg-blue-500 border-blue-500"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {paymentMethodId === method.id && (
-                          <Check className="w-3 h-3 text-white" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+              <PaymentMethodCheckout
+                filteredPaymentMethods={filteredPaymentMethods}
+                handlePaymentMethodSelect={handlePaymentMethodSelect}
+                paymentMethodId={paymentMethodId}
+              />
             </div>
 
             {/* Informações do Método Selecionado */}
@@ -493,7 +395,11 @@ const CheckoutUniqProduct = () => {
           {/* Botão de Finalizar Compra */}
           <Button
             className="w-full bg-green-600 hover:bg-green-700 text-white py-4 text-lg font-semibold"
-            onClick={handleCheckout}
+            onClick={() =>
+              selectedPaymentType === "PIX"
+                ? handlePixPayment()
+                : handleCheckout()
+            }
             disabled={!shippingAddressId || !paymentMethodId}
             size="lg"
           >

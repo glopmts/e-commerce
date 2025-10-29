@@ -7,6 +7,7 @@ import { categoryRouter } from "./products/category";
 import { likeReviewRoute } from "./products/like-review";
 import { productRouter } from "./products/product";
 import { reviewRouter } from "./products/review";
+import { orderRouter } from "./purchase";
 import { userRouter } from "./user";
 import { favoriteRoute } from "./wishlist-Item";
 
@@ -23,6 +24,7 @@ export const appRouter = t.router({
   likeReview: likeReviewRoute,
   favorite: favoriteRoute,
   paymentMethod: paymentMethodRouter,
+  order: orderRouter,
 });
 
 export type AppRouter = typeof appRouter;

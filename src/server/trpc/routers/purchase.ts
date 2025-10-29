@@ -8,7 +8,7 @@ export const orderRouter = router({
     .input(
       z.object({
         shippingAddressId: z.string(),
-        billingAddressId: z.string(),
+        billingAddressId: z.string().optional(),
         paymentMethodId: z.string(),
         discountCode: z.string().optional(),
         items: z.array(
@@ -41,7 +41,6 @@ export const orderRouter = router({
         }
 
         const variant = item.variantId ? product.variants[0] : null;
-
         const price = variant?.price || product.price;
         const stock = variant?.stock || product.stock;
 
@@ -99,10 +98,11 @@ export const orderRouter = router({
           status: "PENDING",
           totalAmount,
           discountAmount,
+          shippingAmount: 0,
           finalAmount,
           userId: session?.user.id!,
           shippingAddressId: input.shippingAddressId,
-          billingAddressId: input.billingAddressId,
+          billingAddressId: input.billingAddressId || input.shippingAddressId,
           paymentMethodId: input.paymentMethodId,
           discountId,
           orderItems: {
@@ -143,7 +143,108 @@ export const orderRouter = router({
       return order;
     }),
 
-  // Listar pedidos do usuário
+  createWithPayment: protectedProcedure
+    .input(
+      z.object({
+        productId: z.string(),
+        variantId: z.string().optional(),
+        quantity: z.number().min(1),
+        shippingAddressId: z.string(),
+        paymentMethodId: z.string(),
+        paymentId: z.string(),
+        totalPrice: z.number(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { session } = ctx;
+
+      const product = await db.product.findUnique({
+        where: { id: input.productId },
+        include: {
+          variants: {
+            where: { id: input.variantId || undefined },
+          },
+        },
+      });
+
+      if (!product) {
+        throw new Error("Produto não encontrado");
+      }
+
+      const variant = input.variantId ? product.variants[0] : null;
+      const stock = variant?.stock || product.stock;
+
+      if (stock < input.quantity) {
+        throw new Error("Estoque insuficiente");
+      }
+
+      const orderNumber = `ORD-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+
+      const order = await db.order.create({
+        data: {
+          orderNumber,
+          status: "PENDING",
+          totalAmount: input.totalPrice,
+          discountAmount: 0,
+          shippingAmount: 0,
+          finalAmount: input.totalPrice,
+          userId: session?.user.id!,
+          shippingAddressId: input.shippingAddressId,
+          billingAddressId: input.shippingAddressId,
+          paymentMethodId: input.paymentMethodId,
+          orderItems: {
+            create: {
+              productId: input.productId,
+              variantId: input.variantId,
+              quantity: input.quantity,
+              unitPrice: input.totalPrice / input.quantity,
+              totalPrice: input.totalPrice,
+            },
+          },
+          payments: {
+            create: {
+              amount: input.totalPrice,
+              status: "PENDING",
+              processor: "mercadopago",
+              transactionId: input.paymentId,
+              userId: session?.user.id,
+              productId: input.productId,
+              paymentMethodId: input.paymentMethodId,
+            },
+          },
+        },
+        include: {
+          orderItems: {
+            include: {
+              product: true,
+              variant: true,
+            },
+          },
+          payments: true,
+        },
+      });
+
+      if (input.variantId) {
+        await db.productVariant.update({
+          where: { id: input.variantId },
+          data: {
+            stock: { decrement: input.quantity },
+          },
+        });
+      } else {
+        await db.product.update({
+          where: { id: input.productId },
+          data: {
+            stock: { decrement: input.quantity },
+          },
+        });
+      }
+
+      return order;
+    }),
+
   getUserOrders: protectedProcedure.query(async ({ ctx }) => {
     const { session } = ctx;
 
