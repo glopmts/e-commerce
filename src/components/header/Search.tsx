@@ -14,6 +14,14 @@ interface SearchResult {
   category: string;
 }
 
+interface DataSearch {
+  id: string;
+  title: string;
+  category: {
+    name: string;
+  };
+}
+
 interface SearchProps {
   className?: string;
   placeholder?: string;
@@ -54,7 +62,7 @@ const Search = ({
     onSearch?.(value);
   };
 
-  const handleResultClick = (result: any) => {
+  const handleResultClick = (result: DataSearch) => {
     setQuery(result.title);
     setShowResults(false);
     onResultSelect?.({
@@ -82,7 +90,8 @@ const Search = ({
     inputRef.current?.focus();
   };
 
-  const formattedResults = results.map((product) => ({
+  // Agora results é sempre um array, então podemos usar length e map diretamente
+  const formattedResults = results.map((product: DataSearch) => ({
     id: product.id,
     name: product.title,
     category: product.category?.name || "Geral",
@@ -115,14 +124,14 @@ const Search = ({
         />
 
         {isLoading && (
-          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4  animate-spin" />
+          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
         )}
 
         {query && !isLoading && (
           <button
             type="button"
             onClick={clearSearch}
-            className="absolute left-3 top-1/3 transform -translate-y-1/2 h-4  text-black w-4 hover:text-zinc-400"
+            className="absolute left-3 top-1/3 transform -translate-y-1/2 h-4 text-black w-4 hover:text-zinc-400"
             aria-label="Limpar busca"
           >
             ×
@@ -154,7 +163,7 @@ const Search = ({
         debouncedQuery &&
         formattedResults.length === 0 &&
         !isLoading && (
-          <div className="absolute top-full left-0 right-0 bg-background border border-border rounded-md shadow-lg mt-1 z-50 p-4 text-center ">
+          <div className="absolute top-full left-0 right-0 bg-background border border-border rounded-md shadow-lg mt-1 z-50 p-4 text-center">
             Nenhum resultado encontrado para "{debouncedQuery}"
           </div>
         )}

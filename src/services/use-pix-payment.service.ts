@@ -45,7 +45,7 @@ const MAX_RETRIES = 3;
 // Service
 const mercadoPagoService = {
   async createPixQrcode(data: PixRequest): Promise<AxiosResponse<PixResponse>> {
-    return axios.post("/api/payments/mercado-pago", data);
+    return axios.post("/api/payments/mercado-pago/pix", data);
   },
 
   async checkPaymentStatus(

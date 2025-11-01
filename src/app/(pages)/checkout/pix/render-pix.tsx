@@ -12,7 +12,8 @@ import { trpc } from "@/server/trpc/client";
 import { usePixPayment } from "@/services/use-pix-payment.service";
 import { Loader, QrCode } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useItem } from "../../../../utils/item-norm";
 
 interface PixData {
   qrCodeBase64: string;
@@ -21,29 +22,6 @@ interface PixData {
   status?: string;
   expirationDate?: string;
 }
-
-type Item = {
-  id: string;
-  product: {
-    id: string;
-    title: string;
-    price: number;
-    stock: number | null;
-  };
-};
-
-type RawItem = {
-  id: string;
-  title?: string;
-  price?: number;
-  stock?: number | null;
-  product?: {
-    id: string;
-    title: string;
-    price: number;
-    stock: number | null;
-  };
-};
 
 const PixCheckout = () => {
   const searchParams = useSearchParams();
@@ -67,34 +45,7 @@ const PixCheckout = () => {
   const shippingAddressId = searchParams.get("shippingAddress") || "";
   const paymentMethodId = searchParams.get("paymentMethod") || "";
   const quantity = Number.parseFloat(searchParams.get("quantity") || "1");
-
-  const normalizeItem = (rawItem: RawItem): Item => {
-    if (rawItem.product) {
-      return {
-        id: rawItem.id,
-        product: {
-          id: rawItem.product.id,
-          title: rawItem.product.title,
-          price: rawItem.product.price,
-          stock: rawItem.product.stock,
-        },
-      };
-    } else {
-      return {
-        id: rawItem.id,
-        product: {
-          id: rawItem.id,
-          title: rawItem.title ?? "",
-          price: rawItem.price ?? 0,
-          stock: rawItem.stock ?? null,
-        },
-      };
-    }
-  };
-
-  const item = useMemo(() => {
-    return itemParam ? normalizeItem(JSON.parse(itemParam)) : null;
-  }, [itemParam]);
+  const item = useItem(itemParam);
 
   const { checkPaymentStatus, handleGenerateSinglePix } = usePixPayment();
 
@@ -134,7 +85,6 @@ const PixCheckout = () => {
 
       hasGeneratedRef.current = true;
     } catch (error) {
-      console.error("Erro ao gerar PIX:", error);
       setError("Erro ao gerar pagamento PIX");
     } finally {
       isGeneratingRef.current = false;
@@ -167,7 +117,6 @@ const PixCheckout = () => {
       !hasGeneratedRef.current &&
       !isGeneratingRef.current
     ) {
-      console.log("Executando geração automática do PIX...");
       generatePixPayment();
     }
   }, [user?.id, item, generatePixPayment]);

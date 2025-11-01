@@ -1,8 +1,8 @@
-import AllProducts from "../components/home/all-products";
-import BannerHome from "../components/home/banner-home";
-import CategoryHome from "../components/home/categorys-home";
-import NewsProducts from "../components/home/news-products";
-import CategoryProducts from "../components/home/products-category";
+import AllProducts from "@/components/home/all-products";
+import BannerHome from "@/components/home/banner-home";
+import CategoryHome from "@/components/home/categorys-home";
+import NewsProducts from "@/components/home/news-products";
+import CategoryProducts from "@/components/home/products-category";
 
 export default async function DashboardPage() {
   return (

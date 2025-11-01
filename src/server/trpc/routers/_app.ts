@@ -1,6 +1,7 @@
 import { initTRPC } from "@trpc/server";
 import { addressRouter } from "./address";
 import { authRouter } from "./auth";
+import { cardRouter } from "./card-payments";
 import { cartRoute } from "./cart-items";
 import { paymentMethodRouter } from "./payment-method";
 import { categoryRouter } from "./products/category";
@@ -25,6 +26,7 @@ export const appRouter = t.router({
   favorite: favoriteRoute,
   paymentMethod: paymentMethodRouter,
   order: orderRouter,
+  card: cardRouter,
 });
 
 export type AppRouter = typeof appRouter;

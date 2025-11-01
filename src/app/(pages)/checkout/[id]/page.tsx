@@ -1,18 +1,18 @@
 "use client";
 
+import AddressInforCheckout from "@/components/checkout/address-infor";
+import PaymentMethodCheckout from "@/components/checkout/payment-method";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { trpc } from "@/server/trpc/client";
+import { Address, PaymentMethod } from "@/types/interfaces";
 import { PaymentMethodEnum } from "@prisma/client";
 import { MapPin, Plus } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import AddressInforCheckout from "../../../components/checkout/address-infor";
-import PaymentMethodCheckout from "../../../components/checkout/payment-method";
-import { Separator } from "../../../components/ui/separator";
-import { Address, PaymentMethod } from "../../../types/interfaces";
 
 const CheckoutUniqProduct = () => {
   const { id } = useParams();
@@ -120,20 +120,21 @@ const CheckoutUniqProduct = () => {
       alert("Por favor, selecione o endereço de entrega e método de pagamento");
       return;
     }
+    setIsProcessing(true);
 
     try {
-      console.log("Processando pedido:", {
-        productId: id,
-        shippingAddressId,
-        paymentMethodId,
-        discountCode,
-        userId,
-      });
-
-      alert("Pedido realizado com sucesso!");
+      router.push(
+        `/checkout/card?product=${encodeURIComponent(
+          JSON.stringify(productFillter)
+        )}&subtotal=${
+          productFillter?.price
+        }&quantity=${selectedQuantity}&shippingAddress=${shippingAddressId}&paymentMethod=${paymentMethodId}`
+      );
     } catch (error) {
       console.error("Erro ao finalizar compra:", error);
       alert("Erro ao finalizar compra. Tente novamente.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -141,6 +142,10 @@ const CheckoutUniqProduct = () => {
 
   const handlePixPayment = async () => {
     if (!id || isNavigating || !userId) return;
+    if (!shippingAddressId || !paymentMethodId) {
+      alert("Por favor, selecione o endereço de entrega e método de pagamento");
+      return;
+    }
 
     setIsNavigating(true);
     try {
@@ -400,7 +405,7 @@ const CheckoutUniqProduct = () => {
                 ? handlePixPayment()
                 : handleCheckout()
             }
-            disabled={!shippingAddressId || !paymentMethodId}
+            disabled={!shippingAddressId || !paymentMethodId || isProcessing}
             size="lg"
           >
             {!shippingAddressId || !paymentMethodId

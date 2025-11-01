@@ -1,6 +1,19 @@
 import { useCallback, useState } from "react";
 import { trpc } from "../server/trpc/client";
 
+interface ProductResult {
+  id: string;
+  title: string;
+  category: {
+    name: string;
+  };
+}
+
+interface ProductsResponse {
+  products: ProductResult[];
+  pagination: any;
+}
+
 export const useProductSearch = () => {
   const [query, setQuery] = useState("");
 
@@ -29,9 +42,11 @@ export const useProductSearch = () => {
     setQuery("");
   }, []);
 
+  const products = (results as ProductsResponse)?.products || [];
+
   return {
     query,
-    results: results || [],
+    results: products,
     isLoading,
     error,
     search,

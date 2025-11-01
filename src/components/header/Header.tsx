@@ -29,8 +29,15 @@ const Links = [
 ];
 
 const Header = () => {
-  const { data: user, isLoading: loaderUser } =
-    trpc.user.getCurrentUser.useQuery();
+  const {
+    data: user,
+    isLoading: loaderUser,
+    error,
+  } = trpc.user.getCurrentUser.useQuery(undefined, {
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const userId = user?.id as string;
   const { addresses, isLoading } = useAddress(userId);
   const formattedName = formatUserName(user?.name);

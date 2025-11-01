@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@mercadopago/sdk-react": "^1.0.6",
     "@prisma/client": "^6.17.1",
     "@prisma/extension-accelerate": "^2.0.2",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -80,6 +81,7 @@
     "@types/nodemailer": "^7.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "mkcert": "^3.2.0",
     "prisma": "^6.17.1",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",

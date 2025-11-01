@@ -24,6 +24,7 @@ model User {
   CartItem      CartItem[]
   LikeReview    LikeReview[]
   Payment       Payment[]
+  CardPayment   CardPayment[]
 
   @@unique([email])
   @@map("user")
@@ -140,7 +141,6 @@ model ProductVariant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relações
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
@@ -162,7 +162,6 @@ model Size {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
-  // Relações
   variants ProductVariant[]
 
   @@map("sizes")
@@ -175,7 +174,6 @@ model Color {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
-  // Relações
   variants ProductVariant[]
 
   @@map("colors")
@@ -201,7 +199,6 @@ model ProductAttribute {
   value     String // Ex: "Algodão", "Nike"
   createdAt DateTime @default(now())
 
-  // Relações
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
@@ -225,7 +222,6 @@ model Discount {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  // Relações
   products DiscountProduct[]
   orders   Order[]
 
@@ -235,7 +231,6 @@ model Discount {
 model DiscountProduct {
   id String @id @default(cuid())
 
-  // Relações
   discountId String
   discount   Discount @relation(fields: [discountId], references: [id])
   productId  String
@@ -260,7 +255,6 @@ model Order {
   shippedAt      DateTime?
   deliveredAt    DateTime?
 
-  // Relações
   userId            String
   user              User          @relation(fields: [userId], references: [id])
   shippingAddressId String
@@ -284,7 +278,6 @@ model OrderItem {
   totalPrice Float
   createdAt  DateTime @default(now())
 
-  // Relações
   orderId   String
   order     Order           @relation(fields: [orderId], references: [id])
   productId String
@@ -297,7 +290,7 @@ model OrderItem {
 
 model PaymentMethod {
   id          String            @id @default(cuid())
-  name        String // Ex: "Cartão de Crédito", "PIX", "Boleto"
+  name        String
   description String?
   typePayment PaymentMethodEnum @default(PIX)
   isActive    Boolean           @default(true)
@@ -305,7 +298,6 @@ model PaymentMethod {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  // Relações
   orders   Order[]
   payments Payment[]
 
@@ -330,8 +322,37 @@ model Payment {
   userId          String?
   Product         Product?      @relation(fields: [productId], references: [id])
   productId       String?
+  CardPayment     CardPayment?  @relation(fields: [cardPaymentId], references: [id])
+  cardPaymentId   String?
 
   @@map("payments")
+}
+
+model CardPayment {
+  id String @id @default(cuid())
+
+  cardNumber  String  @db.VarChar(16)
+  holderName  String  @db.VarChar(255)
+  expiryMonth Int
+  expiryYear  Int
+  cvv         String? @db.VarChar(4)
+  brand       String  @db.VarChar(50)
+
+  token     String? @unique @db.VarChar(255)
+  isActive  Boolean @default(true)
+  isDefault Boolean @default(false)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Payment[]
+
+  @@index([userId])
+  @@index([token])
+  @@map("card_payments")
 }
 
 model Address {
