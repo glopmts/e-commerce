@@ -1,12 +1,23 @@
 "use client";
 
-import { MapPinCheck, ShoppingCart, Star } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut, MapPinCheck, ShoppingCart, Star, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { useAddress } from "../../hooks/useAddress";
+import { authClient } from "../../lib/auth/auth-client";
 import { cn } from "../../lib/utils";
 import { trpc } from "../../server/trpc/client";
+import { UserProps } from "../../types/interfaces";
 import { formatUserName } from "../../utils/format-name";
 import { ModeToggle } from "../ModeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -41,6 +52,17 @@ const Header = () => {
   const userId = user?.id as string;
   const { addresses, isLoading } = useAddress(userId);
   const formattedName = formatUserName(user?.name);
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.reload();
+        },
+      },
+    });
+  };
 
   return (
     <header className="w-full h-auto p-2 sticky top-0 bg-amber-300 border-b z-30">
@@ -71,12 +93,7 @@ const Header = () => {
               <Spinner className="size-6" />
             </div>
           ) : user?.id ? (
-            <Avatar className={cn("w-10 h-10")}>
-              <AvatarImage src={user?.image || ""} />
-              <AvatarFallback className="bg-amber-600 border border-amber-800">
-                {user?.name.charAt(0) || "G"}
-              </AvatarFallback>
-            </Avatar>
+            <MenuDropdown user={user} handleSignOut={handleSignOut} />
           ) : (
             <Button asChild>
               <Link href="/login">Entrar</Link>
@@ -127,6 +144,71 @@ const Header = () => {
         </div>
       </div>
     </header>
+  );
+};
+
+type DropdownProps = {
+  user: UserProps;
+  handleSignOut: () => void;
+};
+
+const MenuDropdown = ({ user, handleSignOut }: DropdownProps) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <Avatar className={cn("w-10 h-10")}>
+          <AvatarImage src={user?.image || ""} />
+          <AvatarFallback className="bg-amber-600 border border-amber-800">
+            {user?.name.charAt(0) || "G"}
+          </AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>
+          <div className="flex items-center gap-2.5">
+            <Avatar className={cn("w-10 h-10")}>
+              <AvatarImage src={user?.image || ""} />
+              <AvatarFallback className="bg-amber-600 border border-amber-800">
+                {user?.name.charAt(0) || "G"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col gap-1 w-30">
+              <span className="text-base text-zinc-400 line-clamp-1 truncate">
+                {user.name || "User"}
+              </span>
+              <span className="text-sm text-zinc-400 ine-clamp-1 truncate">
+                {user.email}
+              </span>
+            </div>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/profile" className="flex items-center gap-1.5">
+            <User size={20} />
+            Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Link href="/profile/purchase" className="flex items-center gap-1.5">
+            <ShoppingCart size={20} />
+            Minhas compras
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem asChild>
+          <Button
+            className="w-full text-white"
+            variant="destructive"
+            onClick={handleSignOut}
+          >
+            Sair <LogOut size={18} />
+          </Button>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

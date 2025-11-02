@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,19 +8,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { auth } from "@/lib/auth/auth";
 import { LogOut, User } from "lucide-react";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Fallback from "../../../components/fallback";
+import { trpc } from "../../../server/trpc/client";
 
-export default async function ProfilePage() {
-  const headersList = await headers();
-  const session = await auth.api.getSession({
-    headers: headersList,
+const ProfilePage = () => {
+  const router = useRouter();
+  const {
+    data: user,
+    isLoading: loadingUser,
+    error,
+  } = trpc.user.getCurrentUser.useQuery(undefined, {
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 
-  if (!session) {
-    redirect("/login");
+  useEffect(() => {
+    if (!loadingUser && !user) {
+      router.push("/login");
+    }
+  }, [user, loadingUser, router]);
+
+  if (loadingUser) {
+    return <Fallback />;
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
@@ -28,7 +46,7 @@ export default async function ProfilePage() {
           <div>
             <h1 className="text-4xl font-bold tracking-tight">Profile</h1>
             <p className="text-muted-foreground mt-2">
-              Welcome back, {session.user.name}
+              Welcome back, {user?.name}
             </p>
           </div>
           <form action="/api/auth/sign-out" method="POST">
@@ -51,36 +69,15 @@ export default async function ProfilePage() {
             <CardContent className="space-y-2">
               <div>
                 <p className="text-sm text-muted-foreground">Name</p>
-                <p className="font-medium">{session.user.name}</p>
+                <p className="font-medium">{user?.name}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{session.user.email}</p>
+                <p className="font-medium">{user?.email}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">User ID</p>
-                <p className="font-mono text-sm">{session.user.id}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle>Session Information</CardTitle>
-              <CardDescription>Your current session details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Session ID</p>
-                <p className="font-mono text-sm truncate">
-                  {session.session.id}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Expires At</p>
-                <p className="text-sm">
-                  {new Date(session.session.expiresAt).toLocaleDateString()}
-                </p>
+                <p className="font-mono text-sm">{user?.id}</p>
               </div>
             </CardContent>
           </Card>
@@ -88,4 +85,6 @@ export default async function ProfilePage() {
       </div>
     </div>
   );
-}
+};
+
+export default ProfilePage;

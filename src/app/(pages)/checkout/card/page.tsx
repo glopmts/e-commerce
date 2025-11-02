@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { Spinner } from "../../../../components/ui/spinner";
+import Fallback from "../../../../components/fallback";
 import CardPaymentPage from "./render-page";
 
 const CardPage = () => {
   return (
-    <Suspense fallback={<Spinner />}>
+    <Suspense fallback={<Fallback />}>
       <CardPaymentPage />
     </Suspense>
   );

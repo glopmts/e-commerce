@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { Spinner } from "../../../../components/ui/spinner";
+import Fallback from "../../../../components/fallback";
 import PixCheckout from "./render-pix";
 
 const PixPage = () => {
   return (
-    <Suspense fallback={<Spinner className="size-5" />}>
+    <Suspense fallback={<Fallback />}>
       <PixCheckout />
     </Suspense>
   );

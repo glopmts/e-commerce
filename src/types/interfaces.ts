@@ -11,6 +11,16 @@ export interface Images {
 }
 [];
 
+export interface UserProps {
+  email: string;
+  id: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  emailVerified: boolean;
+  name: string;
+  image: string | null;
+}
+
 export interface Category {
   id: string;
   createdAt: Date | string;

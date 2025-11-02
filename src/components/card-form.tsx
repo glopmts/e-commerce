@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { CreditCard, Lock } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 interface CardFormProps {
@@ -23,11 +24,13 @@ interface CardFormProps {
 }
 
 const cardBrandLogos: Record<string, string> = {
-  visa: "💳",
-  mastercard: "💳",
-  amex: "💳",
-  elo: "💳",
-  hipercard: "💳",
+  visa: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png",
+  mastercard:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Mastercard_2019_logo.svg/1200px-Mastercard_2019_logo.svg.png",
+  amex: "https://www.americanexpress.com/content/dam/amex/pt-br/network/images/card-art/Cartoes_Recortados_OK/The-Platinum-Card_480x307.png",
+  elo: "https://neofeed.com.br/wp-content/uploads/2021/04/Elo-1-1200x900.jpg",
+  hipercard:
+    "https://play-lh.googleusercontent.com/JVtAPSiGLeOdZXVzzCGoUeh6I0x_7L19cNeQNAwbadxQPvxX3KYnpVXmVeHlbiPkZZI=w600-h300-pc0xffffff-pd",
 };
 
 export function CardForm({ onSubmit, loading }: CardFormProps) {
@@ -38,32 +41,48 @@ export function CardForm({ onSubmit, loading }: CardFormProps) {
   const [brand, setBrand] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Detect card brand
   useEffect(() => {
-    const detectBrand = async () => {
-      if (cardNumber.replace(/\s/g, "").length >= 6) {
-        try {
-          const response = await fetch(
-            "/api/payments/mercado-pago/card/detect-brand",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                cardNumber: cardNumber.replace(/\s/g, ""),
-              }),
-            }
-          );
-          const data = await response.json();
-          if (data.isValid) {
-            setBrand(data.brand);
-          }
-        } catch (error) {
-          console.error("Error detecting brand:", error);
-        }
-      }
-    };
+    const controller = new AbortController();
+    const debounce = setTimeout(() => {
+      const cleaned = cardNumber.replace(/\s/g, "");
+      if (cleaned.length >= 6) {
+        (async () => {
+          try {
+            const response = await fetch(
+              "/api/payments/mercado-pago/card/detect-brand",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ cardNumber: cleaned }),
+                signal: controller.signal,
+              }
+            );
 
-    detectBrand();
+            if (!response.ok) {
+              setBrand("");
+              return;
+            }
+
+            const data = await response.json();
+            if (data?.isValid) {
+              setBrand(data.brand || "");
+            } else {
+              setBrand("");
+            }
+          } catch (error: any) {
+            if (error.name === "AbortError") return;
+            console.error("Error detecting brand:", error);
+          }
+        })();
+      } else {
+        setBrand("");
+      }
+    }, 300);
+
+    return () => {
+      clearTimeout(debounce);
+      controller.abort();
+    };
   }, [cardNumber]);
 
   // Format card number with spaces
@@ -168,7 +187,15 @@ export function CardForm({ onSubmit, loading }: CardFormProps) {
         <div className="flex items-center justify-between mb-4">
           <CreditCard className="h-8 w-8 text-primary" />
           {brand && (
-            <span className="text-2xl">{cardBrandLogos[brand] || "💳"}</span>
+            <div className="w-10 h-10 relative overflow-hidden">
+              <Image
+                src={cardBrandLogos[brand] || "💳"}
+                alt="logo card"
+                sizes="100vw"
+                className="w-full h-full object-contain"
+                fill
+              />
+            </div>
           )}
         </div>
         <div className="space-y-2">
