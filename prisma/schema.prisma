@@ -439,6 +439,16 @@ model CartItem {
   @@map("cart_items")
 }
 
+model VerificationCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  email     String   @unique
+  expiresAt DateTime @default(now())
+  attempts  Int      @default(0)
+
+  @@map("verificationCode")
+}
+
 // Enums
 enum UserRole {
   ADMIN

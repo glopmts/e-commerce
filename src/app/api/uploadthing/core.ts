@@ -11,10 +11,16 @@ export const ourFileRouter = {
       maxFileSize: "4MB",
       maxFileCount: 4,
     },
-  }).onUploadComplete(async ({ metadata, file }) => {
-    console.log("Upload complete for file:", file);
-    console.log("User metadata:", metadata);
-  }),
+  }).onUploadComplete(async ({ metadata, file }) => {}),
+  imageProfile: f({
+    image: {
+      /**
+       * @see https://docs.uploadthing.com/file-routes#route-config
+       */
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+    },
+  }).onUploadComplete(async ({ metadata, file }) => {}),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;
