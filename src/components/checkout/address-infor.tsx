@@ -2,13 +2,13 @@ import { Check } from "lucide-react";
 import { Address } from "../../types/interfaces";
 
 type AddressProps = {
-  shippingAddressId: string;
+  shippingAddressId?: string;
   address: Address;
 };
 
-const AddressInforCheckout = ({ shippingAddressId, address }: AddressProps) => {
+const AddressInfor = ({ shippingAddressId, address }: AddressProps) => {
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-3 border p-2 rounded-md w-full dark:bg-zinc-900 shadow">
       <div
         className={`flex-shrink-0 w-5 h-5 mt-1 rounded-full border-2 flex items-center justify-center ${
           shippingAddressId === address.id
@@ -46,4 +46,4 @@ const AddressInforCheckout = ({ shippingAddressId, address }: AddressProps) => {
   );
 };
 
-export default AddressInforCheckout;
+export default AddressInfor;

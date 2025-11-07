@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { trpc } from "../../server/trpc/client";
+import Title from "../TitleComponent";
 import { Spinner } from "../ui/spinner";
 
 const CategoryHome = () => {
@@ -31,9 +32,7 @@ const CategoryHome = () => {
   return (
     <div className="w-full h-full p-4 ">
       <div className="pb-8">
-        <h2 className="text-xl lg:text-2xl font-bold tracking-tight">
-          Categorias
-        </h2>
+        <Title>Categorias</Title>
         <p className="text-muted-foreground mt-2">
           Explore nossas categorias de produtos
         </p>

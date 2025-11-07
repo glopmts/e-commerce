@@ -3,6 +3,7 @@
 import { trpc } from "../../server/trpc/client";
 import { Product } from "../../types/interfaces";
 import CardProduct from "../card-product";
+import Title from "../TitleComponent";
 import { Spinner } from "../ui/spinner";
 
 const NewsProducts = () => {
@@ -31,7 +32,7 @@ const NewsProducts = () => {
   return (
     <div className="w-full h-full left-0 p-4">
       <div className="pb-6">
-        <h2 className="text-2xl font-bold">Produtos em Destaque</h2>
+        <Title>Produtos em Destaque</Title>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {products?.map((product) => (

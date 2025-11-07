@@ -5,6 +5,7 @@ import Link from "next/link";
 import { trpc } from "../../server/trpc/client";
 import { Product } from "../../types/interfaces";
 import CardProduct from "../card-product";
+import Title from "../TitleComponent";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 
@@ -32,7 +33,7 @@ const CategoryProducts = () => {
   return (
     <div className="w-full h-full left-0 p-4">
       <div className="pb-6 flex justify-between items-center w-full">
-        <h2 className="text-2xl font-bold">Roupas em Destaque</h2>
+        <Title>Roupas em Destaque</Title>
         <div className="">
           <Button variant="link" asChild>
             <Link href="/category/roupas">

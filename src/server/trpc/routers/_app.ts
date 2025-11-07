@@ -27,6 +27,7 @@ export const appRouter = t.router({
   paymentMethod: paymentMethodRouter,
   order: orderRouter,
   card: cardRouter,
+  purchase: orderRouter,
 });
 
 export type AppRouter = typeof appRouter;

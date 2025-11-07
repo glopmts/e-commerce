@@ -29,12 +29,12 @@ import Search from "./Search";
 const Links = [
   {
     label: "Favoritos",
-    href: "/profile/favorite",
+    href: "/user/favorite",
     icon: Star,
   },
   {
     label: "Compras",
-    href: "/profile/purchase",
+    href: "/user/purchase",
     icon: ShoppingCart,
   },
 ];
@@ -108,7 +108,7 @@ const Header = () => {
           ) : (
             addresses.map((address) => (
               <Link
-                href={`/profile/address`}
+                href={`/user/address`}
                 key={address.id}
                 className="text-black flex items-center gap-2.5 hover:opacity-70"
               >
@@ -184,13 +184,13 @@ const MenuDropdown = ({ user, handleSignOut }: DropdownProps) => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="flex items-center gap-1.5">
+          <Link href="/user/profile" className="flex items-center gap-1.5">
             <User size={20} />
             Profile
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Link href="/profile/purchase" className="flex items-center gap-1.5">
+          <Link href="/purchase" className="flex items-center gap-1.5">
             <ShoppingCart size={20} />
             Minhas compras
           </Link>

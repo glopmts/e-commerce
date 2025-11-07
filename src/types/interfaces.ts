@@ -78,14 +78,17 @@ export interface Reviews {
 [];
 
 export interface Address {
-  id: string;
-  street: string;
   number: string;
-  complement?: string | null;
+  id: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  userId: string;
+  zipCode: string;
+  street: string;
+  complement: string | null;
   neighborhood: string;
   city: string;
   state: string;
-  zipCode: string;
   country: string;
   isDefault: boolean;
 }

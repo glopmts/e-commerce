@@ -1,6 +1,6 @@
 "use client";
 
-import AddressInforCheckout from "@/components/checkout/address-infor";
+import AddressInfor from "@/components/checkout/address-infor";
 import PaymentMethodCheckout from "@/components/checkout/payment-method";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -260,7 +260,7 @@ const CheckoutUniqProduct = () => {
                   } ${address.isDefault ? "ring-1 ring-blue-300" : ""}`}
                   onClick={() => handleAddressSelect(address.id)}
                 >
-                  <AddressInforCheckout
+                  <AddressInfor
                     address={address}
                     shippingAddressId={shippingAddressId}
                   />
