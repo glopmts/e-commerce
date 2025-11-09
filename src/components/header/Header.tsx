@@ -23,7 +23,7 @@ import { ModeToggle } from "../ModeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
-import CartItem from "./Cart-Items";
+import CartItem from "./cart-items";
 import Search from "./Search";
 
 const Links = [
@@ -190,7 +190,7 @@ const MenuDropdown = ({ user, handleSignOut }: DropdownProps) => {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Link href="/purchase" className="flex items-center gap-1.5">
+          <Link href="/user/purchase" className="flex items-center gap-1.5">
             <ShoppingCart size={20} />
             Minhas compras
           </Link>

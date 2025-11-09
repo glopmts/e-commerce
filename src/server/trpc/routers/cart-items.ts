@@ -292,7 +292,6 @@ export const cartRoute = router({
           throw error;
         }
 
-        console.error("Failed to update cart:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update cart",
@@ -340,6 +339,13 @@ export const cartRoute = router({
       try {
         const { userId } = input;
 
+        if (!input.userId) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Usuario não logado!",
+          });
+        }
+
         const cart = await db.cartItem.deleteMany({
           where: {
             userId,
@@ -357,45 +363,56 @@ export const cartRoute = router({
         });
       }
     }),
-  getCart: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.user.id) return null;
+  getCart: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        if (!input.userId) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Usuario não logado!",
+          });
+        }
 
-    try {
-      const user = await db.user.findUnique({
-        where: {
-          id: ctx.user.id,
-        },
-      });
-
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
+        const user = await db.user.findUnique({
+          where: {
+            id: input.userId,
+          },
         });
-      }
 
-      const cart = await db.cartItem.findMany({
-        where: {
-          userId: user.id,
-        },
-        include: {
-          product: {
-            include: {
-              images: true,
+        if (!user) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "User not found",
+          });
+        }
+
+        const cart = await db.cartItem.findMany({
+          where: {
+            userId: user.id,
+          },
+          include: {
+            product: {
+              include: {
+                images: true,
+              },
             },
           },
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
 
-      return cart;
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to retrieve cart: " + error,
-      });
-    }
-  }),
+        return cart;
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to retrieve cart: " + error,
+        });
+      }
+    }),
 });

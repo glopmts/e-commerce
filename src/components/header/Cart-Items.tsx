@@ -37,12 +37,22 @@ function ErrorMessage({ error }: { error: string }) {
 
 export default function CartItem({ userId }: { userId: string }) {
   const utils = trpc.useUtils();
-  const {
-    data: cart,
-    isLoading,
-    error,
-    refetch,
-  } = trpc.cart.getCart.useQuery();
+    const {
+      data: user,
+      isLoading: loaderUser,
+      error: errorUser,
+    } = trpc.user.getCurrentUser.useQuery(undefined, {
+      retry: false,
+      staleTime: 5 * 60 * 1000,
+    });
+    const {
+      data: cart,
+      isLoading,
+      error,
+      refetch,
+    } = trpc.cart.getCart.useQuery({
+      userId: user?.id as string,
+    });
   const [isRefetch, setRefetch] = useState(false);
 
   const removeFromCart = trpc.cart.deleteCart.useMutation({
