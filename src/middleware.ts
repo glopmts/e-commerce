@@ -5,7 +5,7 @@ const protectedRoutes = ["/", "/profile", "/settings", "/user"];
 
 const authRoutes = ["/login", "/signup", "/signin"];
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtectedRoute = protectedRoutes.some((route) =>

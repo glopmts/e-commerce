@@ -26,7 +26,7 @@ const SidebarUser = ({ user, pathname }: UserProps) => {
         </Avatar>
         <div className="flex flex-col gap-2">
           <span className="text-sm font-semibold">
-            {formatUserName(user.name)}
+            {formatUserName(user.name || "G")}
           </span>
           <Link
             href="/user/profile"
