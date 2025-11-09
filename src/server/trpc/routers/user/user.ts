@@ -1,10 +1,10 @@
 import { db } from "@/lib/prisma";
 import { TRPCError } from "@trpc/server";
 import { object, z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../init";
+import { protectedProcedure, publicProcedure, router } from "../../init";
 
+import { sendEmail } from "@/lib/email";
 import { randomInt } from "crypto";
-import { sendEmail } from "../../../lib/email";
 
 const generateVerificationCode = (): string => {
   return randomInt(100000, 999999).toString();

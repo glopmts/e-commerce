@@ -10,7 +10,7 @@ import {
 } from "@/lib/schemas/address-schemas";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { publicProcedure, router } from "../init";
+import { publicProcedure, router } from "../../init";
 
 export const addressRouter = router({
   getAddresses: publicProcedure

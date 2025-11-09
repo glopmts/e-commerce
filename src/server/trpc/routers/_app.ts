@@ -1,5 +1,4 @@
 import { initTRPC } from "@trpc/server";
-import { addressRouter } from "./address";
 import { authRouter } from "./auth";
 import { cardRouter } from "./card-payments";
 import { cartRoute } from "./cart-items";
@@ -9,8 +8,9 @@ import { likeReviewRoute } from "./products/like-review";
 import { productRouter } from "./products/product";
 import { reviewRouter } from "./products/review";
 import { orderRouter } from "./purchase";
-import { userRouter } from "./user";
-import { favoriteRoute } from "./wishlist-Item";
+import { addressRouter } from "./user/address";
+import { userRouter } from "./user/user";
+import { favoriteRoute } from "./user/wishlist-Item";
 
 const t = initTRPC.create();
 

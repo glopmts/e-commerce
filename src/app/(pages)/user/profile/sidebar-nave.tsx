@@ -57,7 +57,7 @@ const SidebarUser = ({ user, pathname }: UserProps) => {
         </div>
         <div className="mt-2">
           <Link
-            href="/profile/purchase"
+            href="/user/purchase"
             className="flex items-center gap-2 hover:border-b"
           >
             <ShoppingBag size={18} />

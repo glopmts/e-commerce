@@ -268,8 +268,6 @@ export const orderRouter = router({
             },
           },
         },
-        shippingAddress: true,
-        billingAddress: true,
         paymentMethod: true,
       },
       orderBy: {

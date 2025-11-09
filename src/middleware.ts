@@ -9,15 +9,13 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isProtectedPage =
-    request.nextUrl.pathname.startsWith("/") ||
+    request.nextUrl.pathname.startsWith("/dashboard") ||
     request.nextUrl.pathname.startsWith("/profile");
 
-  // Redirecionar usuários autenticados das páginas de auth
   if (isAuthPage && session?.user) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Redirecionar usuários não autenticados de páginas protegidas
   if (isProtectedPage && !session?.user) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -26,5 +24,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/auth/:path*", "/dashboard/:path*"],
+  matcher: ["/auth/:path*", "/dashboard/:path*", "/user/:path*"],
+  runtime: "nodejs", // Força usar Node.js runtime
 };
