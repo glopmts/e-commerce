@@ -37,6 +37,8 @@ export async function POST(request: Request) {
       paymentMethodId,
     }: CheckoutRequest = await request.json();
 
+    console.log(userId);
+
     const checkoutItems = items || (item ? [item] : []);
 
     if (
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validar produtos
+    // Validar produtos (código mantido igual)
     const productIds = checkoutItems.map((item) => item.id);
     const dbProducts = await db.product.findMany({
       where: { id: { in: productIds } },
@@ -113,16 +115,13 @@ export async function POST(request: Request) {
     await db.$transaction(async (tx) => {
       const caller = appRouter.createCaller({
         db: tx,
-        session: {
-          user: { id: userId },
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        },
+        user: { id: userId },
       });
 
-      // Para múltiplos itens
       if (checkoutItems.length > 1) {
         // Criar o pedido primeiro
         const order = await caller.order.create({
+          userId,
           shippingAddressId,
           paymentMethodId,
           items: checkoutItems.map((item) => ({
@@ -147,6 +146,7 @@ export async function POST(request: Request) {
       } else {
         // Para item único, use createWithPayment
         await caller.order.createWithPayment({
+          userId,
           productId: checkoutItems[0].id,
           quantity: checkoutItems[0].quantity,
           shippingAddressId,

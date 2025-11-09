@@ -121,7 +121,7 @@ const PurchaseUser = () => {
         <Title>Minhas compras</Title>
       </div>
       <div className="w-full h-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {purchases.map((order) => {
             const primaryProduct = order.orderItems[0]?.product;
             const primaryImage =
@@ -140,7 +140,7 @@ const PurchaseUser = () => {
                 <CardContent className="p-4">
                   <div className="flex gap-3 items-start w-full h-full">
                     {/* Product Image */}
-                    <div className="relative flex-shrink-0">
+                    <div className="relative">
                       {primaryImage ? (
                         <Image
                           src={primaryImage.url}

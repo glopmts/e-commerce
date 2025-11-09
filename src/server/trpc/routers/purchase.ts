@@ -7,6 +7,7 @@ export const orderRouter = router({
   create: protectedProcedure
     .input(
       z.object({
+        userId: z.string(),
         shippingAddressId: z.string(),
         billingAddressId: z.string().optional(),
         paymentMethodId: z.string(),
@@ -21,7 +22,6 @@ export const orderRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { session } = ctx;
 
       let totalAmount = 0;
       const orderItems = [];
@@ -100,7 +100,7 @@ export const orderRouter = router({
           discountAmount,
           shippingAmount: 0,
           finalAmount,
-          userId: session?.user.id!,
+          userId: input.userId!,
           shippingAddressId: input.shippingAddressId,
           billingAddressId: input.billingAddressId || input.shippingAddressId,
           paymentMethodId: input.paymentMethodId,
@@ -147,6 +147,7 @@ export const orderRouter = router({
     .input(
       z.object({
         productId: z.string(),
+        userId : z.string(),
         variantId: z.string().optional(),
         quantity: z.number().min(1),
         shippingAddressId: z.string(),
@@ -156,7 +157,6 @@ export const orderRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { session } = ctx;
 
       const product = await db.product.findUnique({
         where: { id: input.productId },
@@ -190,7 +190,7 @@ export const orderRouter = router({
           discountAmount: 0,
           shippingAmount: 0,
           finalAmount: input.totalPrice,
-          userId: session?.user.id!,
+          userId: input.userId !,
           shippingAddressId: input.shippingAddressId,
           billingAddressId: input.shippingAddressId,
           paymentMethodId: input.paymentMethodId,
@@ -209,7 +209,7 @@ export const orderRouter = router({
               status: "PENDING",
               processor: "mercadopago",
               transactionId: input.paymentId,
-              userId: session?.user.id,
+              userId: input.userId ,
               productId: input.productId,
               paymentMethodId: input.paymentMethodId,
             },

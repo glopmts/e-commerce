@@ -205,7 +205,7 @@ export const usePixPayment = () => {
         if (data.status === "approved") {
           setPaymentStatus("approved");
           toast.success("Pagamento aprovado! Redirecionando...");
-          setTimeout(() => router.push("/checkout/success"), 2000);
+          setTimeout(() => router.push("/payment/success"), 2000);
         } else if (data.status === "rejected") {
           setPaymentStatus("rejected");
           toast.error("Pagamento rejeitado");

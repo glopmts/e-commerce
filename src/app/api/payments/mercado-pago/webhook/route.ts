@@ -1,4 +1,3 @@
-// app/api/payments/mercado-pago/webhook/route.ts
 import { transporter } from "@/lib/email";
 import { db } from "@/lib/prisma";
 import { generatePurchaseConfirmationEmail } from "@/lib/send-email";
@@ -12,33 +11,22 @@ const client = new MercadoPagoConfig({
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log("Webhook recebido:", JSON.stringify(body, null, 2));
+    console.log("🔔 Webhook recebido:", JSON.stringify(body, null, 2));
 
+    // Verificar se é um webhook de pagamento
     if (body.type !== "payment") {
-      return NextResponse.json(
-        { error: "Tipo de webhook não suportado" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: true });
     }
 
     if (!body.data || !body.data.id) {
-      return NextResponse.json(
-        { error: "Payload do webhook inválido" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
     }
 
     const paymentId = body.data.id;
+    console.log("💰 Processando pagamento:", paymentId);
 
     const payment = new Payment(client);
     const paymentInfo = await payment.get({ id: paymentId });
-
-    console.log("Informações do pagamento:", {
-      id: paymentInfo.id,
-      status: paymentInfo.status,
-      status_detail: paymentInfo.status_detail,
-      transaction_amount: paymentInfo.transaction_amount,
-    });
 
     const dbPayment = await db.payment.findFirst({
       where: {
@@ -72,13 +60,13 @@ export async function POST(request: Request) {
     });
 
     if (!dbPayment) {
-      console.error("Pagamento não encontrado no banco:", paymentId);
       return NextResponse.json(
         { error: "Pagamento não encontrado" },
         { status: 404 }
       );
     }
 
+    // Mapear status
     let paymentStatus:
       | "PENDING"
       | "COMPLETED"
@@ -106,6 +94,7 @@ export async function POST(request: Request) {
         paymentStatus = "PENDING";
     }
 
+    // Atualizar pagamento
     const updatedPayment = await db.payment.update({
       where: {
         id: dbPayment.id,
@@ -115,70 +104,55 @@ export async function POST(request: Request) {
         metadata: paymentInfo as any,
         updatedAt: new Date(),
       },
-      include: {
-        User: true,
-        Product: true,
-        order: true,
-      },
     });
 
-    console.log("Pagamento atualizado:", {
-      paymentId: updatedPayment.id,
-      status: updatedPayment.status,
-    });
-
+    // Se o pagamento foi aprovado, atualizar o pedido
     if (paymentInfo.status === "approved") {
       if (dbPayment.order) {
-        await db.order.update({
+        const updatedOrder = await db.order.update({
           where: { id: dbPayment.order.id },
           data: {
             status: "CONFIRMED",
             paidAt: new Date(),
             updatedAt: new Date(),
           },
+          include: {
+            orderItems: {
+              include: {
+                product: true,
+              },
+            },
+          },
         });
 
-        console.log("Pedido atualizado para CONFIRMED:", dbPayment.order.id);
-      }
+        // Enviar email de confirmação
+        if (dbPayment.User?.email) {
+          try {
+            const emailOptions = generatePurchaseConfirmationEmail({
+              email: dbPayment.User.email,
+              name: dbPayment.User.name || "Cliente",
+              orderId: updatedOrder.orderNumber,
+              purchaseDate: new Date().toLocaleDateString("pt-BR"),
+              items: updatedOrder.orderItems.map((item) => ({
+                name: item.product.title,
+                quantity: item.quantity,
+                price: item.unitPrice,
+              })),
+              totalAmount: updatedOrder.finalAmount,
+            });
 
-      // Enviar email de confirmação
-      if (dbPayment.User?.email) {
-        try {
-          const orderItems = dbPayment.order?.orderItems || [
-            {
-              product: {
-                title: dbPayment.Product?.title || "Produto",
-                price: dbPayment.amount,
-              },
-              quantity: 1,
-              unitPrice: dbPayment.amount,
-            },
-          ];
-
-          const emailOptions = generatePurchaseConfirmationEmail({
-            email: dbPayment.User.email,
-            name: dbPayment.User.name || "Cliente",
-            orderId: dbPayment.order?.orderNumber || `PAY-${dbPayment.id}`,
-            purchaseDate: new Date().toLocaleDateString("pt-BR"),
-            items: orderItems.map((item) => ({
-              name: item.product.title,
-              quantity: item.quantity,
-              price: item.unitPrice,
-            })),
-            totalAmount: dbPayment.amount,
-          });
-
-          await transporter.sendMail(emailOptions);
-          console.log(
-            "Email de confirmação enviado para:",
-            dbPayment.User.email
-          );
-        } catch (emailError) {
-          console.error("Erro ao enviar email de confirmação:", emailError);
+            await transporter.sendMail(emailOptions);
+            console.log("📧 Email enviado para:", dbPayment.User.email);
+          } catch (emailError) {
+            console.error("❌ Erro ao enviar email:", emailError);
+          }
         }
+      } else {
+        console.log("⚠️ Pagamento não vinculado a um pedido");
       }
     }
 
+    // Se o pagamento foi rejeitado
     if (
       paymentInfo.status === "rejected" ||
       paymentInfo.status === "cancelled"
@@ -191,7 +165,6 @@ export async function POST(request: Request) {
             updatedAt: new Date(),
           },
         });
-        console.log("Pedido atualizado para CANCELLED:", dbPayment.order.id);
       }
     }
 
@@ -199,12 +172,37 @@ export async function POST(request: Request) {
       success: true,
       paymentId: paymentId,
       status: paymentInfo.status,
+      orderUpdated: paymentInfo.status === "approved",
     });
   } catch (error) {
-    console.error("Erro no webhook:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
     );
   }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const paymentId = searchParams.get("payment_id");
+
+  if (paymentId) {
+    try {
+      const payment = new Payment(client);
+      const paymentInfo = await payment.get({ id: paymentId });
+
+      return NextResponse.json({
+        payment_status: paymentInfo.status,
+        webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/mercado-pago/webhook`,
+        registered: true,
+      });
+    } catch (error) {
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    }
+  }
+
+  return NextResponse.json({
+    webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/mercado-pago/webhook`,
+    environment: process.env.NODE_ENV,
+  });
 }

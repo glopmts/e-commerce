@@ -1,6 +1,6 @@
 "use client";
 
-import { ProductImageGallery } from "@/components/product/imagens-details";
+import { ProductImageGallery } from "@/components/product/Imagens-details";
 import PaymentMethods from "@/components/product/PaymentMethods";
 import { ProductActions } from "@/components/product/ProductActions";
 import { ProductAttributes } from "@/components/product/ProductAttributes";

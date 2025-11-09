@@ -5,7 +5,7 @@ import { Share2, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { trpc } from "../../server/trpc/client";
-import FavoriteButton from "./favorite-button";
+import FavoriteButton from "./Favorite-Button";
 
 interface ProductActionsProps {
   productId: string;
