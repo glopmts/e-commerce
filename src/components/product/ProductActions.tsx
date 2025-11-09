@@ -27,8 +27,8 @@ export function ProductActions({
   const [quantity, setQuantity] = useState(1);
   const utils = trpc.useUtils();
 
-  const { data: cartData, refetch } = trpc.cart.getCart.useQuery(undefined, {
-    enabled: !!userId,
+  const { data: cartData, refetch } = trpc.cart.getCart.useQuery({
+    userId,
   });
 
   const existingCartItem = cartData?.find(
