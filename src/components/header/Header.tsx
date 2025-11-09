@@ -8,23 +8,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAddress } from "@/hooks/useAddress";
+import { authClient } from "@/lib/auth/auth-client";
+import { cn } from "@/lib/utils";
+import { trpc } from "@/server/trpc/client";
+import { UserProps } from "@/types/interfaces";
+import { formatUserName } from "@/utils/format-name";
 import { LogOut, MapPinCheck, ShoppingCart, Star, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { useAddress } from "../../hooks/useAddress";
-import { authClient } from "../../lib/auth/auth-client";
-import { cn } from "../../lib/utils";
-import { trpc } from "../../server/trpc/client";
-import { UserProps } from "../../types/interfaces";
-import { formatUserName } from "../../utils/format-name";
 import { ModeToggle } from "../ModeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
+import CartItems from "./Cart";
 import Search from "./Search";
-import CartItems from "./cart-items";
 
 const Links = [
   {
