@@ -35,7 +35,7 @@ function ErrorMessage({ error }: { error: string }) {
   );
 }
 
-export default function CartItem({ userId }: { userId: string }) {
+export default function CartItems({ userId }: { userId: string }) {
   const utils = trpc.useUtils();
     const {
       data: user,
