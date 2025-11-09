@@ -23,8 +23,8 @@ import { ModeToggle } from "../ModeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
-import CartItem from "./cart-items";
 import Search from "./Search";
+import CartItem from "./cart-items";
 
 const Links = [
   {
