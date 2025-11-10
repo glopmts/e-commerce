@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
       if (checkoutItems.length > 1) {
         // Criar o pedido primeiro
         const order = await caller.order.create({
+          userId,
           shippingAddressId,
           paymentMethodId,
           items: checkoutItems.map((item) => ({
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
       } else {
         // Para item único, use createWithPayment
         await caller.order.createWithPayment({
+          userId,
           productId: checkoutItems[0].id,
           quantity: checkoutItems[0].quantity,
           shippingAddressId,

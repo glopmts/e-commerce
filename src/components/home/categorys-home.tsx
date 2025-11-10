@@ -5,6 +5,7 @@ import Link from "next/link";
 import { trpc } from "../../server/trpc/client";
 import Title from "../TitleComponent";
 import { Spinner } from "../ui/spinner";
+import { ProductCardSkeleton } from "../fallback";
 
 const CategoryHome = () => {
   const {
@@ -16,7 +17,7 @@ const CategoryHome = () => {
   if (isLoading) {
     return (
       <div className="flex h-96 w-full items-center justify-center bg-banner">
-        <Spinner className="size-9" />
+        <ProductCardSkeleton />
       </div>
     );
   }

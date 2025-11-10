@@ -3,6 +3,7 @@
 import { trpc } from "../../server/trpc/client";
 import { Product } from "../../types/interfaces";
 import CardProduct from "../card-product";
+import { ProductCardSkeleton } from "../fallback";
 import Title from "../TitleComponent";
 import { Spinner } from "../ui/spinner";
 
@@ -23,8 +24,8 @@ const AllProducts = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 w-full items-center justify-center bg-banner">
-        <Spinner className="size-9" />
+      <div className="flex h-96 w-full items-center justify-center">
+        <ProductCardSkeleton />
       </div>
     );
   }

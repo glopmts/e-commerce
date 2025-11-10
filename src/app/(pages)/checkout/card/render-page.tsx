@@ -46,7 +46,6 @@ const CardPaymentPage = () => {
     brand: string;
   }) => {
     try {
-      // Create Mercado Pago token
       const token = await createCardToken({
         cardNumber: cardData.cardNumber,
         cardholderName: cardData.holderName,
@@ -54,10 +53,9 @@ const CardPaymentPage = () => {
         cardExpirationYear: cardData.expiryYear.toString(),
         securityCode: cardData.cvv,
         identificationType: "CPF",
-        identificationNumber: "00000000000", // Should be collected from user
+        identificationNumber: "00000000000",
       });
 
-      // Save card to database
       await saveCardMutation.mutateAsync({
         ...cardData,
         token: token.id,

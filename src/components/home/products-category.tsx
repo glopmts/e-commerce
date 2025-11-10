@@ -8,6 +8,7 @@ import CardProduct from "../card-product";
 import Title from "../TitleComponent";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
+import { CardsGridSkeleton, ProductCardSkeleton } from "../fallback";
 
 const CategoryProducts = () => {
   const {
@@ -25,7 +26,7 @@ const CategoryProducts = () => {
   if (isLoading) {
     return (
       <div className="flex h-96 w-full items-center justify-center bg-banner">
-        <Spinner className="size-9" />
+        <ProductCardSkeleton />
       </div>
     );
   }
