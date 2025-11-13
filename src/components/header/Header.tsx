@@ -52,7 +52,6 @@ const Header = () => {
   const userId = user?.id as string;
   const { addresses, isLoading } = useAddress(userId);
   const formattedName = formatUserName(user?.name);
-  const router = useRouter();
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -80,7 +79,7 @@ const Header = () => {
             <span className="text-2xl font-semibold">VlopShoop</span>
           </Link>
         </div>
-        <div className="md:max-w-md lg:max-w-lg w-full">
+        <div className="hidden md:block md:max-w-md lg:max-w-lg w-full">
           <Suspense fallback={<Spinner />}>
             <Search />
           </Suspense>

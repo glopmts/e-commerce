@@ -1,3 +1,5 @@
+import { PixItem } from "../services/use-pix-payment.service";
+
 export type Item = {
   id: string;
   price?: number;
@@ -12,10 +14,11 @@ export type Item = {
 };
 
 export interface OrderSummaryProps {
-  item?: Item | null;
-  items?: Item[] | null;
+  item?: PixItem | null;
+  items?: PixItem[] | null;
   subtotal: number;
   total: number;
+  type: "single" | "cart";
 }
 
 export interface PaymentStatusProps {

@@ -179,7 +179,7 @@ export function ProductImageGallery({
                 key={image.id}
                 onClick={() => selectImage(image.url, index)}
                 className={cn(
-                  "relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0 overflow-hidden rounded-md border-2 transition-all hover:border-primary",
+                  "relative w-16 h-16 md:w-20 md:h-20 shrink-0 overflow-hidden rounded-md border-2 transition-all hover:border-primary",
                   selectedImage === image.url
                     ? "border-blue-500 border-2"
                     : "border-gray-300"

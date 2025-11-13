@@ -1,3 +1,4 @@
+// app/checkout/pix/PixCheckout.tsx
 "use client";
 
 import { ActionButtons } from "@/components/pix-components/action-buttons";
@@ -9,11 +10,13 @@ import { PaymentStatusIndicator } from "@/components/pix-components/payment-stat
 import { QRCodeSection } from "@/components/pix-components/qr-code-section";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/server/trpc/client";
-import { usePixPayment } from "@/services/use-pix-payment.service";
+import {
+  usePixPayment,
+  type PixItem,
+} from "@/services/use-pix-payment.service";
 import { Loader, QrCode } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useItem } from "../../../../utils/item-norm";
 
 interface PixData {
   qrCodeBase64: string;
@@ -25,7 +28,8 @@ interface PixData {
 
 const PixCheckout = () => {
   const searchParams = useSearchParams();
-  const { data: user, isLoading } = trpc.user.getCurrentUser.useQuery();
+  const { data: user, isLoading: isLoadingUser } =
+    trpc.user.getCurrentUser.useQuery();
 
   const isGeneratingRef = useRef(false);
   const hasGeneratedRef = useRef(false);
@@ -39,23 +43,106 @@ const PixCheckout = () => {
   >("pending");
   const [expirationTime, setExpirationTime] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [checkoutType, setCheckoutType] = useState<"single" | "cart">("single");
+  const [processedItems, setProcessedItems] = useState<PixItem[]>([]);
 
-  const itemParam = searchParams.get("product");
-  const total = Number.parseFloat(searchParams.get("subtotal") || "0");
-  const shippingAddressId = searchParams.get("shippingAddress") || "";
-  const paymentMethodId = searchParams.get("paymentMethod") || "";
-  const quantity = Number.parseFloat(searchParams.get("quantity") || "1");
-  const item = useItem(itemParam);
+  const { checkPaymentStatus, handleGeneratePix } = usePixPayment();
 
-  const { checkPaymentStatus, handleGenerateSinglePix } = usePixPayment();
+  // Processar dados uma única vez - useCallback para evitar recriações
+  const processCheckoutData = useCallback((): {
+    items: PixItem[];
+    type: "single" | "cart";
+    total: number;
+    shippingAddressId: string;
+    paymentMethodId: string;
+  } => {
+    // Obter todos os parâmetros possíveis
+    const itemParam = searchParams.get("product");
+    const total = Number.parseFloat(
+      searchParams.get("total") || searchParams.get("subtotal") || "0"
+    );
+    const shippingAddressId = searchParams.get("shippingAddress") || "";
+    const paymentMethodId = searchParams.get("paymentMethod") || "";
+    const quantity = Number.parseFloat(searchParams.get("quantity") || "1");
+    const selectedItemsParam = searchParams.get("selectedItems");
+    const cartDataParam = searchParams.get("cartData");
+
+    let items: PixItem[] = [];
+    let type: "single" | "cart" = "single";
+
+    // Se temos dados de carrinho na URL, processar como carrinho
+    if (cartDataParam && selectedItemsParam) {
+      try {
+        const cartData = JSON.parse(cartDataParam);
+        const selectedItems = new Set(JSON.parse(selectedItemsParam));
+
+        items = cartData
+          .filter((item: any) => selectedItems.has(item.id))
+          .map((item: any) => ({
+            id: item.product.id,
+            name: item.product.title || item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            shippingAddressId: shippingAddressId,
+            paymentMethodId: paymentMethodId,
+          }));
+
+        console.log(cartData);
+
+        if (items.length > 0) {
+          type = "cart";
+        }
+      } catch (error) {
+        console.error("Erro ao processar dados do carrinho:", error);
+        // Retornar valores padrão com tipo explícito
+        return {
+          items: [],
+          type: "single",
+          total: 0,
+          shippingAddressId: "",
+          paymentMethodId: "",
+        };
+      }
+    }
+    // Se temos parâmetros de item único
+    else if (itemParam) {
+      type = "single";
+      items = [
+        {
+          id: itemParam,
+          name: searchParams.get("productName") || "Produto",
+          price: Number.parseFloat(searchParams.get("price") || "0"),
+          quantity: quantity,
+          shippingAddressId: shippingAddressId,
+          paymentMethodId: paymentMethodId,
+        },
+      ];
+    }
+
+    return { items, type, total, shippingAddressId, paymentMethodId };
+  }, [searchParams]);
+
+  // Efeito para processar dados uma única vez
+  useEffect(() => {
+    const checkoutData = processCheckoutData();
+    setProcessedItems(checkoutData.items);
+    setCheckoutType(checkoutData.type);
+  }, [processCheckoutData]);
 
   const generatePixPayment = useCallback(async () => {
     if (
       isGeneratingRef.current ||
       hasGeneratedRef.current ||
       !user?.id ||
-      !item
+      processedItems.length === 0
     ) {
+      return;
+    }
+
+    const checkoutData = processCheckoutData();
+
+    if (checkoutData.items.length === 0) {
+      setError("Nenhum item encontrado para pagamento");
       return;
     }
 
@@ -63,19 +150,14 @@ const PixCheckout = () => {
     setIsProcessing(true);
 
     try {
-      await handleGenerateSinglePix(
-        {
-          id: item.product.id,
-          name: item.product.title,
-          price: item.product.price,
-          quantity: quantity,
-          shippingAddressId: shippingAddressId,
-          paymentMethodId: paymentMethodId,
-        },
-        total,
+      await handleGeneratePix(
+        checkoutData.items,
+        checkoutData.total,
         user.id,
         user.email || null,
         retryCount,
+        checkoutData.paymentMethodId || "pix",
+        checkoutData.shippingAddressId,
         setError,
         setIsProcessing,
         setPixData,
@@ -92,14 +174,23 @@ const PixCheckout = () => {
   }, [
     user?.id,
     user?.email,
-    item,
-    handleGenerateSinglePix,
-    quantity,
-    total,
-    shippingAddressId,
-    paymentMethodId,
     retryCount,
+    handleGeneratePix,
+    processedItems.length,
+    processCheckoutData,
   ]);
+
+  // Efeito para gerar PIX apenas quando usuário estiver disponível
+  useEffect(() => {
+    if (
+      user?.id &&
+      processedItems.length > 0 &&
+      !hasGeneratedRef.current &&
+      !isGeneratingRef.current
+    ) {
+      generatePixPayment();
+    }
+  }, [user?.id, processedItems.length, generatePixPayment]);
 
   const handleRetry = useCallback(async () => {
     hasGeneratedRef.current = false;
@@ -107,23 +198,13 @@ const PixCheckout = () => {
     setPixData(null);
     setError(null);
     setPaymentStatus("pending");
+    setRetryCount(0);
     await generatePixPayment();
   }, [generatePixPayment]);
 
+  // Timer para expiração - corrigido para evitar loops
   useEffect(() => {
-    if (
-      user?.id &&
-      item &&
-      !hasGeneratedRef.current &&
-      !isGeneratingRef.current
-    ) {
-      generatePixPayment();
-    }
-  }, [user?.id, item, generatePixPayment]);
-
-  // Timer para expiração
-  useEffect(() => {
-    if (!expirationTime) return;
+    if (!expirationTime || paymentStatus !== "pending") return;
 
     const timer = setInterval(() => {
       const now = new Date();
@@ -139,9 +220,9 @@ const PixCheckout = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [expirationTime]);
+  }, [expirationTime, paymentStatus]);
 
-  // Verificar status do pagamento
+  // Verificar status do pagamento - corrigido para evitar loops
   useEffect(() => {
     if (!pixData?.paymentId || paymentStatus !== "pending") return;
 
@@ -152,7 +233,7 @@ const PixCheckout = () => {
     return () => clearInterval(interval);
   }, [pixData?.paymentId, paymentStatus, checkPaymentStatus]);
 
-  if (isLoading) {
+  if (isLoadingUser) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center">
         <Loader className="w-8 h-8 animate-spin" />
@@ -160,11 +241,23 @@ const PixCheckout = () => {
     );
   }
 
+  const checkoutData = processCheckoutData();
+
   return (
     <div className="w-full min-h-screen h-full p-2 max-w-7xl mx-auto">
       <div className="w-full h-full">
         <div className="pb-6">
           <h1 className="text-2xl font-semibold">Pagamento via PIX</h1>
+          {checkoutType === "cart" && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Pagamento do carrinho com {checkoutData.items.length} item(s)
+            </p>
+          )}
+          {checkoutType === "single" && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Pagamento de item único
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Coluna do QR Code */}
@@ -209,7 +302,12 @@ const PixCheckout = () => {
 
           {/* Coluna do Resumo */}
           <div className="space-y-6">
-            <OrderSummary item={item} subtotal={total} total={total} />
+            <OrderSummary
+              items={checkoutData.items}
+              subtotal={checkoutData.total}
+              total={checkoutData.total}
+              type={checkoutType}
+            />
             <PaymentStatus
               paymentStatus={paymentStatus}
               paymentId={pixData?.paymentId}

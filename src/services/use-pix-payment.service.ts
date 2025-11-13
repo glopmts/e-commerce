@@ -1,12 +1,12 @@
 "use client";
 
-import axios, { type AxiosError, type AxiosResponse } from "axios";
+import axios, { type AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
 // Types
-type PixItem = {
+export type PixItem = {
   id: string;
   name: string;
   price: number;
@@ -15,17 +15,17 @@ type PixItem = {
   paymentMethodId?: string;
 };
 
-type PixRequest = {
-  items?: PixItem[];
-  item?: PixItem;
+export type PixRequest = {
+  items: PixItem[];
   total: number;
   userId: string;
   email: string;
   shippingAddressId: string;
   paymentMethodId: string;
+  type: "single" | "cart";
 };
 
-type PixResponse = {
+export type PixResponse = {
   qr_code_base64: string;
   qr_code: string;
   id: string;
@@ -33,7 +33,7 @@ type PixResponse = {
   message?: string;
 };
 
-type PaymentStatusResponse = {
+export type PaymentStatusResponse = {
   status: "pending" | "approved" | "rejected";
   error?: string;
 };
@@ -44,18 +44,22 @@ const MAX_RETRIES = 3;
 
 // Service
 const mercadoPagoService = {
-  async createPixQrcode(data: PixRequest): Promise<AxiosResponse<PixResponse>> {
-    return axios.post("/api/payments/mercado-pago/pix", data);
+  async createPixQrcode(data: PixRequest): Promise<{ data: PixResponse }> {
+    const response = await axios.post("/api/payments/mercado-pago/pix", data);
+    return response;
   },
 
   async checkPaymentStatus(
     paymentId: string
-  ): Promise<AxiosResponse<PaymentStatusResponse>> {
-    return axios.get(`/api/payments/mercado-pago/status/${paymentId}`);
+  ): Promise<{ data: PaymentStatusResponse }> {
+    const response = await axios.get(
+      `/api/payments/mercado-pago/status/${paymentId}`
+    );
+    return response;
   },
 };
 
-// Hook
+// Hook Unificado
 export const usePixPayment = () => {
   const router = useRouter();
 
@@ -68,6 +72,7 @@ export const usePixPayment = () => {
       retryCount: number,
       paymentMethodId: string,
       shippingAddressId: string,
+      type: "single" | "cart", // Tipo da transação
       setError: (error: string | null) => void,
       setIsProcessing: (processing: boolean) => void,
       setPixData: (data: {
@@ -80,7 +85,7 @@ export const usePixPayment = () => {
       setRetryCount: (count: number | ((prev: number) => number)) => void
     ) => {
       if (!items || items.length === 0) {
-        setError("Carrinho vazio");
+        setError("Nenhum item encontrado para pagamento");
         return;
       }
 
@@ -100,12 +105,8 @@ export const usePixPayment = () => {
           paymentMethodId,
           shippingAddressId,
           email: email || "",
+          type, // Incluir tipo na requisição
         };
-
-        // Para compatibilidade com chamadas antigas que esperam um único item
-        if (items.length === 1) {
-          requestData.item = items[0];
-        }
 
         const response = await mercadoPagoService.createPixQrcode(requestData);
         const { data: responseData } = response;
@@ -143,14 +144,16 @@ export const usePixPayment = () => {
     []
   );
 
-  // Função simplificada para item único
-  const handleGenerateSinglePix = useCallback(
+  // Função unificada que detecta automaticamente o tipo
+  const handleGeneratePixUnified = useCallback(
     async (
-      item: PixItem | null,
+      items: PixItem[],
       total: number,
       userId: string,
       email: string | null,
       retryCount: number,
+      paymentMethodId: string,
+      shippingAddressId: string,
       setError: (error: string | null) => void,
       setIsProcessing: (processing: boolean) => void,
       setPixData: (data: {
@@ -162,22 +165,17 @@ export const usePixPayment = () => {
       setExpirationTime: (date: Date) => void,
       setRetryCount: (count: number | ((prev: number) => number)) => void
     ) => {
-      if (!item) {
-        setError("Item não especificado");
-        return;
-      }
-
-      const shippingAddressId = item.shippingAddressId || "";
-      const paymentMethodId = item.paymentMethodId || "";
+      const type = items.length === 1 ? "single" : "cart";
 
       await handleGeneratePix(
-        [item],
+        items,
         total,
         userId,
         email,
         retryCount,
         paymentMethodId,
         shippingAddressId,
+        type,
         setError,
         setIsProcessing,
         setPixData,
@@ -224,8 +222,7 @@ export const usePixPayment = () => {
   );
 
   return {
-    handleGeneratePix,
-    handleGenerateSinglePix,
+    handleGeneratePix: handleGeneratePixUnified, // Exportar função unificada
     checkPaymentStatus,
   };
 };

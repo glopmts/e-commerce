@@ -24,7 +24,7 @@ const NewsProducts = () => {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 w-full items-center justify-center bg-banner">
+      <div className="w-full max-w-6xl mx-auto p-2 mt-4 min-h-screen h-full">
         <ProductCardSkeleton />
       </div>
     );

@@ -13,11 +13,11 @@ import { ProductVariants } from "@/components/product/ProductVariants";
 import FormReview from "@/components/reviews/form-review";
 import RenderReviews from "@/components/reviews/reviews-render";
 import { Separator } from "@/components/ui/separator";
-import { Spinner } from "@/components/ui/spinner";
 import { useReviews } from "@/hooks/use-reviews";
 import { trpc } from "@/server/trpc/client";
 import { User } from "@/types/interfaces";
 import { useParams } from "next/navigation";
+import { PageSkeleton } from "../../../components/fallback";
 
 const RenderProduct = () => {
   const { slug } = useParams();
@@ -48,7 +48,7 @@ const RenderProduct = () => {
   if (isLoading || loaderUser || isLoadingReviews || isLoadingHasReview) {
     return (
       <div className="flex h-96 w-full items-center justify-center bg-banner">
-        <Spinner className="size-9" />
+        <PageSkeleton />
       </div>
     );
   }

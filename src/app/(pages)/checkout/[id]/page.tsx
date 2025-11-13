@@ -131,7 +131,6 @@ const CheckoutUniqProduct = () => {
         }&quantity=${selectedQuantity}&shippingAddress=${shippingAddressId}&paymentMethod=${paymentMethodId}`
       );
     } catch (error) {
-      console.error("Erro ao finalizar compra:", error);
       alert("Erro ao finalizar compra. Tente novamente.");
     } finally {
       setIsProcessing(false);
@@ -242,7 +241,8 @@ const CheckoutUniqProduct = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => router.push("/profile/addresses")}
+                className="rounded-full"
+                onClick={() => router.push("/user/addresses")}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Novo Endereço

@@ -18,6 +18,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "../ui/dropdown-menu";
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
@@ -36,25 +37,22 @@ function ErrorMessage({ error }: { error: string }) {
 }
 
 export default function CartItems({ userId }: { userId: string }) {
-   const utils = trpc.useUtils();
-   const {
-     data: user,
-     isLoading: loaderUser,
-     error: errorUser,
-   } = trpc.user.getCurrentUser.useQuery(undefined, {
-     retry: false,
-     staleTime: 5 * 60 * 1000,
-   });
-   const {
-     data: cart,
-     isLoading,
-     error,
-     refetch,
-   } = trpc.cart.getCart.useQuery({
-     userId: user?.id as string,
-   });
+  const utils = trpc.useUtils();
+  const { data: user } = trpc.user.getCurrentUser.useQuery(undefined, {
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const {
+    data: cart,
+    isLoading,
+    error,
+    refetch,
+  } = trpc.cart.getCart.useQuery({
+    userId: user?.id as string,
+  });
 
   const [isRefetch, setRefetch] = useState(false);
+  const [isOpen, setOpen] = useState(false);
 
   const removeFromCart = trpc.cart.deleteCart.useMutation({
     onSuccess: () => {
@@ -77,8 +75,12 @@ export default function CartItems({ userId }: { userId: string }) {
     }, 2000);
   };
 
+  const handleClose = () => {
+    setOpen(!isOpen);
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -150,7 +152,7 @@ export default function CartItems({ userId }: { userId: string }) {
                       })}
                   </span>
                 </div>
-                <Button className="w-full" asChild>
+                <Button className="w-full" asChild onClick={handleClose}>
                   <Link href="/checkout/cart">Finalizar Compra</Link>
                 </Button>
               </div>

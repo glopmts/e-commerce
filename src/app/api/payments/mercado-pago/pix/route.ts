@@ -2,6 +2,7 @@ import { db } from "@/lib/prisma";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { NextResponse } from "next/server";
+import { validatePrices } from "../../../../../lib/price-validation";
 
 export interface ItemProps {
   id: string;
@@ -37,17 +38,22 @@ export async function POST(request: Request) {
       paymentMethodId,
     }: CheckoutRequest = await request.json();
 
-    console.log(userId);
+    console.log("Recebendo pedido PIX:", {
+      userId,
+      total,
+      itemsCount: items?.length || 1,
+      paymentMethodId,
+    });
 
     const checkoutItems = items || (item ? [item] : []);
+    const validationResult = await validatePrices(checkoutItems, total);
 
     if (
       checkoutItems.length === 0 ||
       !email ||
       !userId ||
       !total ||
-      !shippingAddressId ||
-      !paymentMethodId
+      !shippingAddressId
     ) {
       return NextResponse.json(
         { error: "Dados obrigatórios faltando" },
@@ -55,41 +61,67 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validar produtos (código mantido igual)
-    const productIds = checkoutItems.map((item) => item.id);
-    const dbProducts = await db.product.findMany({
-      where: { id: { in: productIds } },
-    });
-
-    for (const item of checkoutItems) {
-      const dbProduct = dbProducts.find((p) => p.id === item.id);
-
-      if (!dbProduct) {
-        return NextResponse.json(
-          { success: false, message: `Produto ${item.id} não encontrado` },
-          { status: 400 }
-        );
-      }
-
-      if (item.price !== dbProduct.price) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: `Preço do produto ${item.id} não corresponde ao valor no sistema`,
+    if (!validationResult.isValid) {
+      console.error("Erros de validação de preços:", validationResult.errors);
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Erro de validação de preços",
+          errors: validationResult.errors,
+          details: {
+            frontendTotal: total,
+            calculatedTotal: validationResult.calculatedTotal,
+            items: validationResult.items,
           },
-          { status: 400 }
-        );
-      }
+        },
+        { status: 400 }
+      );
+    }
 
-      if (dbProduct.stock && dbProduct.stock < item.quantity) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: `Estoque insuficiente para o produto ${dbProduct.title}`,
+    let finalPaymentMethodId = paymentMethodId;
+
+    if (!finalPaymentMethodId) {
+      const pixPaymentMethod = await db.paymentMethod.findFirst({
+        where: {
+          OR: [{ name: "PIX" }, { typePayment: "PIX" }],
+          isActive: true,
+        },
+      });
+
+      if (!pixPaymentMethod) {
+        const newPixMethod = await db.paymentMethod.create({
+          data: {
+            name: "PIX",
+            description: "Pagamento via PIX",
+            isActive: true,
+            typePayment: "PIX",
           },
-          { status: 400 }
-        );
+        });
+        finalPaymentMethodId = newPixMethod.id;
+      } else {
+        finalPaymentMethodId = pixPaymentMethod.id;
       }
+    } else {
+      const existingPaymentMethod = await db.paymentMethod.findUnique({
+        where: { id: finalPaymentMethodId },
+      });
+
+      if (!existingPaymentMethod) {
+        const pixPaymentMethod = await db.paymentMethod.findFirst({
+          where: {
+            OR: [{ name: "PIX" }, { typePayment: "PIX" }],
+            isActive: true,
+          },
+        });
+        finalPaymentMethodId = pixPaymentMethod?.id!;
+      }
+    }
+
+    if (!finalPaymentMethodId) {
+      return NextResponse.json(
+        { error: "Método de pagamento PIX não configurado" },
+        { status: 400 }
+      );
     }
 
     const description =
@@ -100,7 +132,7 @@ export async function POST(request: Request) {
     const payment = new Payment(client);
     const response = await payment.create({
       body: {
-        transaction_amount: total,
+        transaction_amount: total, // Usar o total validado
         payment_method_id: "pix",
         description: description,
         payer: {
@@ -112,6 +144,8 @@ export async function POST(request: Request) {
 
     const paymentId = response?.id?.toString() ?? "";
 
+    console.log("Criando pedido com paymentMethodId:", finalPaymentMethodId);
+
     await db.$transaction(async (tx) => {
       const caller = appRouter.createCaller({
         db: tx,
@@ -119,11 +153,11 @@ export async function POST(request: Request) {
       });
 
       if (checkoutItems.length > 1) {
-        // Criar o pedido primeiro
+        // Para múltiplos itens
         const order = await caller.order.create({
           userId,
           shippingAddressId,
-          paymentMethodId,
+          paymentMethodId: finalPaymentMethodId,
           items: checkoutItems.map((item) => ({
             productId: item.id,
             quantity: item.quantity,
@@ -139,18 +173,18 @@ export async function POST(request: Request) {
             transactionId: paymentId,
             userId: userId,
             productId: checkoutItems[0].id,
-            paymentMethodId: paymentMethodId,
+            paymentMethodId: finalPaymentMethodId,
             orderId: order.id,
           },
         });
       } else {
-        // Para item único, use createWithPayment
+        // Para item único
         await caller.order.createWithPayment({
           userId,
           productId: checkoutItems[0].id,
           quantity: checkoutItems[0].quantity,
           shippingAddressId,
-          paymentMethodId,
+          paymentMethodId: finalPaymentMethodId,
           paymentId,
           totalPrice: total,
         });
@@ -168,12 +202,12 @@ export async function POST(request: Request) {
       ticket_url: response.point_of_interaction?.transaction_data?.ticket_url,
     });
   } catch (error) {
-    console.error("Erro no checkout:", error);
+    console.error("Erro no checkout PIX:", error);
 
     if (error instanceof Error) {
       return NextResponse.json(
         {
-          error: "Erro no processamento do pagamento",
+          error: "Erro no processamento do pagamento PIX",
           details: error.message,
         },
         { status: 500 }

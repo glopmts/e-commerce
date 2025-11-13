@@ -10,6 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getDominantColor } from "../../utils/getDominatColor";
+import { ClearanceBannerSkeleton } from "../fallback";
 
 type Timeout = ReturnType<typeof setTimeout>;
 
@@ -204,8 +205,8 @@ export default function ClearanceBanner() {
 
   if (isLoading) {
     return (
-      <div className="flex h-96 w-full items-center justify-center bg-banner">
-        <Spinner className="size-9" />
+      <div className="w-full max-w-6xl mx-auto p-2 mt-4 min-h-screen h-full">
+        <ClearanceBannerSkeleton />
       </div>
     );
   }

@@ -50,12 +50,76 @@ const CardsGridSkeleton = ({ count = 6 }: { count?: number }) => {
   );
 };
 
+const ClearanceBannerSkeleton = () => {
+  return (
+    <div className="relative w-full overflow-hidden bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-900">
+      <div className="mx-auto relative max-w-6xl h-auto px-4 py-8 md:py-12 lg:py-16">
+        <div className="relative flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-between lg:gap-12">
+          {/* Left Content Skeleton */}
+          <div className="z-10 flex w-full flex-col items-center gap-6 md:w-1/2 md:items-start">
+            {/* Title Skeleton */}
+            <div className="space-y-2 w-full max-w-xs">
+              <div className="h-10 md:h-16 lg:h-20 w-full bg-white/30 dark:bg-white/10 rounded-lg animate-pulse" />
+              <div className="h-8 md:h-14 lg:h-16 w-4/5 bg-white/30 dark:bg-white/10 rounded-lg animate-pulse" />
+            </div>
+
+            {/* Badges Skeleton */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 w-full">
+              {/* Discount Badge */}
+              <div className="rounded-full bg-white/40 dark:bg-white/20 backdrop-blur-sm px-6 py-3 md:px-8 md:py-4 animate-pulse">
+                <div className="h-12 md:h-14 lg:h-16 w-32 bg-gray-300/50 dark:bg-gray-700/50 rounded" />
+              </div>
+
+              {/* Free Shipping Badge */}
+              <div className="rounded-full bg-white/40 dark:bg-white/20 backdrop-blur-sm px-6 py-3 md:px-8 md:py-4 animate-pulse">
+                <div className="space-y-2">
+                  <div className="h-4 w-28 bg-gray-300/50 dark:bg-gray-700/50 rounded" />
+                  <div className="h-3 w-24 bg-gray-300/50 dark:bg-gray-700/50 rounded" />
+                </div>
+              </div>
+            </div>
+
+            {/* Button Skeleton */}
+            <div className="w-full sm:w-auto">
+              <div className="h-14 w-full sm:w-80 bg-white/40 dark:bg-white/20 rounded-full animate-pulse" />
+            </div>
+
+            {/* Disclaimer Skeleton */}
+            <div className="space-y-1">
+              <div className="h-3 w-64 bg-white/20 dark:bg-white/10 rounded animate-pulse" />
+              <div className="h-3 w-52 bg-white/20 dark:bg-white/10 rounded animate-pulse" />
+            </div>
+          </div>
+
+          {/* Right Image Skeleton */}
+          <div className="relative z-10 w-full md:w-1/2">
+            <div className="relative rounded-md mx-auto h-[400px] w-full max-w-md md:max-w-none bg-white/30 dark:bg-white/10 animate-pulse" />
+          </div>
+        </div>
+
+        {/* Dots Indicator Skeleton */}
+        <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 transform gap-2">
+          <div className="h-2 w-8 bg-white/40 dark:bg-white/20 rounded-full animate-pulse" />
+          <div className="h-2 w-2 bg-white/30 dark:bg-white/15 rounded-full animate-pulse" />
+          <div className="h-2 w-2 bg-white/30 dark:bg-white/15 rounded-full animate-pulse" />
+        </div>
+      </div>
+
+      {/* Gradient Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-black/100 to-transparent pointer-events-none" />
+    </div>
+  );
+};
+
 // Loading de Card de Produto
 const ProductCardSkeleton = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full h-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full md:h-full">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div className="rounded-lg border bg-card overflow-hidden" key={i}>
+        <div
+          className="rounded-lg border bg-card overflow-hidden h-full"
+          key={i}
+        >
           <Skeleton className="h-64 w-full" />
           <div className="p-4 space-y-3">
             <Skeleton className="h-6 w-3/4" />
@@ -417,6 +481,7 @@ export {
   ProfileSkeleton,
   Skeleton,
   TableSkeleton,
+  ClearanceBannerSkeleton,
 };
 
 export default Fallback;
