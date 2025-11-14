@@ -17,7 +17,7 @@ import { useReviews } from "@/hooks/use-reviews";
 import { trpc } from "@/server/trpc/client";
 import { User } from "@/types/interfaces";
 import { useParams } from "next/navigation";
-import { PageSkeleton } from "../../../components/fallback";
+import { PageSkeleton } from "@/components/fallback";
 
 const RenderProduct = () => {
   const { slug } = useParams();
@@ -39,15 +39,25 @@ const RenderProduct = () => {
     error: reviewsError,
     hasReview,
     isLoadingHasReview,
+    canCreateReview,
+    isLoadingCanCreate,
     isCreating,
     isDeleting,
     createReview,
     removeReview,
   } = useReviews({ productId: product?.id!, userId });
 
-  if (isLoading || loaderUser || isLoadingReviews || isLoadingHasReview) {
+  // Combine todos os estados de loading
+  const isLoadingAll =
+    isLoading ||
+    loaderUser ||
+    isLoadingReviews ||
+    isLoadingHasReview ||
+    isLoadingCanCreate;
+
+  if (isLoadingAll) {
     return (
-      <div className="flex h-96 w-full items-center justify-center bg-banner">
+      <div className="w-full max-w-6xl mx-auto p-2 mt-4 min-h-screen h-full">
         <PageSkeleton />
       </div>
     );
@@ -55,7 +65,7 @@ const RenderProduct = () => {
 
   if (error || !product) {
     return (
-      <div className="flex h-96 w-full items-center justify-center">
+      <div className="flex h-full min-h-screen w-full items-center justify-center">
         <p className="text-muted-foreground">Produto não encontrado</p>
       </div>
     );
@@ -127,6 +137,8 @@ const RenderProduct = () => {
             {product.content && <ProductContent content={product.content} />}
             <div className=""></div>
           </div>
+
+          {/* SEÇÃO DE REVIEWS - ATUALIZADA */}
           <div className="mt-9">
             {hasReview ? (
               <div className="">
@@ -137,7 +149,8 @@ const RenderProduct = () => {
                   handleDelete={removeReview}
                 />
               </div>
-            ) : (
+            ) : canCreateReview ? (
+              // Mostra formulário apenas se pode criar review (comprou o produto)
               <FormReview
                 user={user as User}
                 isCreating={isCreating}
@@ -146,6 +159,13 @@ const RenderProduct = () => {
                 imageUrlProduct={product.thumbnail || null}
                 nameProduct={product.title || null}
               />
+            ) : (
+              // Mensagem para usuários que não compraram o produto
+              <div className="text-center p-6 border rounded-lg bg-muted/50">
+                <p className="text-muted-foreground">
+                  Você precisa comprar este produto para deixar uma avaliação.
+                </p>
+              </div>
             )}
           </div>
         </div>

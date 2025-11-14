@@ -24,9 +24,19 @@ export const useReviews = ({ productId, userId }: ReviewData) => {
       userId,
     });
 
+  const { data: canCreateReview, isLoading: isLoadingCanCreate } =
+    trpc.review.canCreateReview.useQuery({
+      productId,
+      userId,
+    });
+
   const createReviewMutation = trpc.review.createReview.useMutation({
     onSuccess: () => {
       utils.review.getReviewsByProductId.invalidate({ productId });
+      utils.review.existsReviewByUserAndProduct.invalidate({
+        productId,
+        userId,
+      });
       refetch();
     },
   });
@@ -34,6 +44,10 @@ export const useReviews = ({ productId, userId }: ReviewData) => {
   const deleteReview = trpc.review.deleteReview.useMutation({
     onSuccess: () => {
       utils.review.getReviewsByProductId.invalidate({ productId });
+      utils.review.existsReviewByUserAndProduct.invalidate({
+        productId,
+        userId,
+      });
       refetch();
     },
   });
@@ -57,7 +71,7 @@ export const useReviews = ({ productId, userId }: ReviewData) => {
       if (!confirmed) return;
       return await deleteReview.mutateAsync({ reviewId: id, userId });
     },
-    [deleteReview, productId, userId]
+    [deleteReview, userId]
   );
 
   return {
@@ -66,6 +80,8 @@ export const useReviews = ({ productId, userId }: ReviewData) => {
     error,
     hasReview,
     isLoadingHasReview,
+    canCreateReview: !!canCreateReview,
+    isLoadingCanCreate,
     isCreating: createReviewMutation.isPending,
     isDeleting: deleteReview.isPending,
     createReview,

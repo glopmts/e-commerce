@@ -52,7 +52,7 @@ const CardsGridSkeleton = ({ count = 6 }: { count?: number }) => {
 
 const ClearanceBannerSkeleton = () => {
   return (
-    <div className="relative w-full overflow-hidden bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-900">
+    <div className="relative w-full overflow-hidden bg-linear-to-br">
       <div className="mx-auto relative max-w-6xl h-auto px-4 py-8 md:py-12 lg:py-16">
         <div className="relative flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-between lg:gap-12">
           {/* Left Content Skeleton */}

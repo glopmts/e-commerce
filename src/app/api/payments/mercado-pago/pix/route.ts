@@ -2,7 +2,7 @@ import { db } from "@/lib/prisma";
 import { appRouter } from "@/server/trpc/routers/_app";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { NextResponse } from "next/server";
-import { validatePrices } from "../../../../../lib/price-validation";
+import { validatePrices } from "@/lib/price-validation";
 
 export interface ItemProps {
   id: string;
@@ -36,7 +36,8 @@ export async function POST(request: Request) {
       total,
       shippingAddressId,
       paymentMethodId,
-    }: CheckoutRequest = await request.json();
+      type = "single",
+    }: CheckoutRequest & { type?: "single" | "cart" } = await request.json();
 
     console.log("Recebendo pedido PIX:", {
       userId,
@@ -46,20 +47,11 @@ export async function POST(request: Request) {
     });
 
     const checkoutItems = items || (item ? [item] : []);
-    const validationResult = await validatePrices(checkoutItems, total);
-
-    if (
-      checkoutItems.length === 0 ||
-      !email ||
-      !userId ||
-      !total ||
-      !shippingAddressId
-    ) {
-      return NextResponse.json(
-        { error: "Dados obrigatórios faltando" },
-        { status: 400 }
-      );
-    }
+    const validationResult = await validatePrices(
+      checkoutItems,
+      total,
+      paymentMethodId
+    );
 
     if (!validationResult.isValid) {
       console.error("Erros de validação de preços:", validationResult.errors);
@@ -71,6 +63,8 @@ export async function POST(request: Request) {
           details: {
             frontendTotal: total,
             calculatedTotal: validationResult.calculatedTotal,
+            expectedTotalWithPixDiscount:
+              validationResult.expectedTotalWithPixDiscount,
             items: validationResult.items,
           },
         },
@@ -144,8 +138,6 @@ export async function POST(request: Request) {
 
     const paymentId = response?.id?.toString() ?? "";
 
-    console.log("Criando pedido com paymentMethodId:", finalPaymentMethodId);
-
     await db.$transaction(async (tx) => {
       const caller = appRouter.createCaller({
         db: tx,
@@ -153,7 +145,7 @@ export async function POST(request: Request) {
       });
 
       if (checkoutItems.length > 1) {
-        // Para múltiplos itens
+        // Para múltiplos itens (carrinho)
         const order = await caller.order.create({
           userId,
           shippingAddressId,
@@ -177,8 +169,19 @@ export async function POST(request: Request) {
             orderId: order.id,
           },
         });
+
+        // LIMPAR CARRINHO CORRETAMENTE - para múltiplos itens
+        const productIds = checkoutItems.map(item => item.id);
+        await tx.cartItem.deleteMany({
+          where: {
+            userId: userId,
+            productId: {
+              in: productIds
+            }
+          },
+        });
+
       } else {
-        // Para item único
         await caller.order.createWithPayment({
           userId,
           productId: checkoutItems[0].id,
@@ -186,7 +189,13 @@ export async function POST(request: Request) {
           shippingAddressId,
           paymentMethodId: finalPaymentMethodId,
           paymentId,
-          totalPrice: total,
+        });
+
+        await tx.cartItem.deleteMany({
+          where: {
+            userId: userId,
+            productId: checkoutItems[0].id
+          },
         });
       }
     });

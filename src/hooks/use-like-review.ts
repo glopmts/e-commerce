@@ -50,6 +50,8 @@ export const useLikeReview = ({
     },
     onSuccess: () => {
       utils.likeReview.existingLikeReview.setData({ reviewId, userId }, false);
+      refetch();
+      refetchGetLike();
     },
     onError: (error) => {
       console.error("Remove like error:", error);
@@ -68,8 +70,12 @@ export const useLikeReview = ({
     try {
       if (isOptimisticLike) {
         await removeMutation.mutateAsync({ reviewId, userId });
+        await refetch();
+        await refetchGetLike();
       } else {
         await addMutation.mutateAsync({ reviewId, userId });
+        await refetch();
+        await refetchGetLike();
       }
     } catch (error) {
       console.error("Error toggling like:", error);

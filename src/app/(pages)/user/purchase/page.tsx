@@ -123,7 +123,7 @@ const PurchaseUser = () => {
       <div className="w-full h-full">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {purchases.map((order) => {
-            const primaryProduct = order.orderItems[0]?.product;
+            const primaryProduct = order.orderItems[1]?.product;
             const primaryImage =
               primaryProduct?.images.find((img) => img.isPrimary) ||
               primaryProduct?.images[0];

@@ -16,10 +16,35 @@ export interface PriceValidationResult {
 }
 
 export async function validatePrices(
-  frontendItems: Array<{ id: string; name: string; price: number; quantity: number }>,
-  frontendTotal: number
-): Promise<PriceValidationResult> {
-  const productIds = frontendItems.map(item => item.id);
+  frontendItems: Array<{
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }>,
+  frontendTotal: number,
+  paymentMethodId: string
+): Promise<PriceValidationResult & { expectedTotalWithPixDiscount: number }> {
+  console.log("Validando preços - paymentMethodId:", paymentMethodId);
+
+  // Verificar se é pagamento PIX - CORREÇÃO AQUI
+  let isPixPayment = false;
+
+  if (paymentMethodId === "pix" || paymentMethodId === "PIX") {
+    isPixPayment = true;
+  } else {
+    // Buscar no banco apenas se não for identificado como PIX pelo ID
+    const paymentMethod = await db.paymentMethod.findUnique({
+      where: { id: paymentMethodId },
+    });
+    isPixPayment = paymentMethod?.typePayment === "PIX";
+  }
+
+  console.log("É pagamento PIX?", isPixPayment);
+
+  const pixDiscountRate = 0.1; // 10% de desconto
+
+  const productIds = frontendItems.map((item) => item.id);
   const dbProducts = await db.product.findMany({
     where: { id: { in: productIds } },
     select: {
@@ -30,23 +55,31 @@ export async function validatePrices(
     },
   });
 
-  let calculatedTotal = 0;
+  let originalTotal = 0;
+  let expectedTotalWithDiscount = 0;
   const errors: string[] = [];
-  const items: PriceValidationResult['items'] = [];
+  const items: PriceValidationResult["items"] = [];
 
   for (const frontendItem of frontendItems) {
-    const dbProduct = dbProducts.find(p => p.id === frontendItem.id);
-    
+    const dbProduct = dbProducts.find((p) => p.id === frontendItem.id);
+
     if (!dbProduct) {
       errors.push(`Produto ${frontendItem.id} não encontrado`);
       continue;
     }
 
-    const itemSubtotal = dbProduct.price * frontendItem.quantity;
-    calculatedTotal += itemSubtotal;
-    
+    const itemOriginalSubtotal = dbProduct.price * frontendItem.quantity;
+    originalTotal += itemOriginalSubtotal;
+
+    // CALCULAR COM DESCONTO PIX SE APLICÁVEL
+    const itemDiscountedSubtotal = isPixPayment
+      ? itemOriginalSubtotal * (1 - pixDiscountRate)
+      : itemOriginalSubtotal;
+
+    expectedTotalWithDiscount += itemDiscountedSubtotal;
+
     const priceMatch = frontendItem.price === dbProduct.price;
-    
+
     if (!priceMatch) {
       errors.push(
         `Preço alterado: "${dbProduct.title}" - Frontend: R$ ${frontendItem.price} vs Banco: R$ ${dbProduct.price}`
@@ -64,24 +97,45 @@ export async function validatePrices(
       name: frontendItem.name,
       price: frontendItem.price,
       quantity: frontendItem.quantity,
-      subtotal: itemSubtotal,
+      subtotal: itemOriginalSubtotal,
       dbPrice: dbProduct.price,
       priceMatch,
     });
   }
 
+  // DEBUG: Log dos cálculos
+  console.log("DEBUG - Cálculos de validação:", {
+    frontendTotal,
+    originalTotal,
+    expectedTotalWithDiscount,
+    isPixPayment,
+    itemsCount: frontendItems.length,
+    items: frontendItems.map((item) => ({
+      id: item.id,
+      price: item.price,
+      quantity: item.quantity,
+      subtotal: item.price * item.quantity,
+    })),
+  });
+
   const tolerance = 0.01;
-  const totalMatch = Math.abs(frontendTotal - calculatedTotal) <= tolerance;
-  
+  const totalMatch =
+    Math.abs(frontendTotal - expectedTotalWithDiscount) <= tolerance;
+
   if (!totalMatch) {
     errors.push(
-      `Total inválido: Frontend R$ ${frontendTotal} vs Calculado R$ ${calculatedTotal} (diferença: R$ ${Math.abs(frontendTotal - calculatedTotal).toFixed(2)})`
+      `Total inválido: Frontend R$ ${frontendTotal} vs Esperado com ${
+        isPixPayment ? "desconto PIX" : "sem desconto"
+      } R$ ${expectedTotalWithDiscount} (diferença: R$ ${Math.abs(
+        frontendTotal - expectedTotalWithDiscount
+      ).toFixed(2)})`
     );
   }
 
   return {
     isValid: errors.length === 0,
-    calculatedTotal,
+    calculatedTotal: originalTotal,
+    expectedTotalWithPixDiscount: expectedTotalWithDiscount,
     errors,
     items,
   };

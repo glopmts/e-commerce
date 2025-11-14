@@ -2,6 +2,7 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  ArrowRight,
   Loader,
   RefreshCcw,
   ShoppingCart,
@@ -153,7 +154,9 @@ export default function CartItems({ userId }: { userId: string }) {
                   </span>
                 </div>
                 <Button className="w-full" asChild onClick={handleClose}>
-                  <Link href="/checkout/cart">Finalizar Compra</Link>
+                  <Link href="/checkout/cart">
+                    Vizualizar carrinho <ArrowRight size={16} />
+                  </Link>
                 </Button>
               </div>
             </>
@@ -194,7 +197,7 @@ function Cards({
       key={item.id}
       className="flex gap-3 items-start border bg-gray-200 dark:bg-zinc-900 p-2 rounded-md"
     >
-      <Link href={`/product/${item.product.slug}`} className="flex-shrink-0">
+      <Link href={`/product/${item.product.slug}`} className="shrink-0">
         <div className="w-20 h-20 relative">
           <Image
             src={

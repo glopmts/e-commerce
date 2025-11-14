@@ -57,12 +57,30 @@ export const reviewRouter = router({
             message: "Product ID and User ID are required",
           });
         }
+
+        const completedPurchase = await db.order.findFirst({
+          where: {
+            userId: input.userId,
+            status: "CONFIRMED",
+            orderItems: {
+              some: {
+                productId: input.productId,
+              },
+            },
+          },
+        });
+
+        if (!completedPurchase) {
+          return false;
+        }
+
         const review = await db.review.findFirst({
           where: {
             productId: input.productId,
             userId: input.userId,
           },
         });
+
         return review !== null;
       } catch (error) {
         throw new TRPCError({
@@ -71,6 +89,39 @@ export const reviewRouter = router({
         });
       }
     }),
+
+  canCreateReview: publicProcedure
+    .input(
+      z.object({
+        productId: z.string(),
+        userId: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      try {
+        if (!input.productId || !input.userId) {
+          return false;
+        }
+
+        const completedPurchase = await db.order.findFirst({
+          where: {
+            userId: input.userId,
+            status: "CONFIRMED",
+            orderItems: {
+              some: {
+                productId: input.productId,
+              },
+            },
+          },
+        });
+
+        return !!completedPurchase;
+      } catch (error) {
+        console.error("Error checking if user can create review:", error);
+        return false;
+      }
+    }),
+
   createReview: publicProcedure
     .input(
       z.object({

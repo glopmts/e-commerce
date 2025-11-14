@@ -2,36 +2,9 @@
 
 import axios, { type AxiosError } from "axios";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
-
-// Types
-export type PixItem = {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  shippingAddressId?: string;
-  paymentMethodId?: string;
-};
-
-export type PixRequest = {
-  items: PixItem[];
-  total: number;
-  userId: string;
-  email: string;
-  shippingAddressId: string;
-  paymentMethodId: string;
-  type: "single" | "cart";
-};
-
-export type PixResponse = {
-  qr_code_base64: string;
-  qr_code: string;
-  id: string;
-  status: string;
-  message?: string;
-};
+import { PixRequest, PixResponse, PixItem } from "../types/pix-interfaces";
 
 export type PaymentStatusResponse = {
   status: "pending" | "approved" | "rejected";
@@ -62,6 +35,8 @@ const mercadoPagoService = {
 // Hook Unificado
 export const usePixPayment = () => {
   const router = useRouter();
+  // CORREÇÃO: Adicionar ref para controlar requisições em andamento
+  const pendingRequestRef = useRef<string | null>(null);
 
   const handleGeneratePix = useCallback(
     async (
@@ -72,7 +47,7 @@ export const usePixPayment = () => {
       retryCount: number,
       paymentMethodId: string,
       shippingAddressId: string,
-      type: "single" | "cart", // Tipo da transação
+      type: "single" | "cart",
       setError: (error: string | null) => void,
       setIsProcessing: (processing: boolean) => void,
       setPixData: (data: {
@@ -94,10 +69,27 @@ export const usePixPayment = () => {
         return;
       }
 
+      // CORREÇÃO: Verificar se já existe uma requisição em andamento
+      const requestKey = `${userId}-${items
+        .map((i) => i.id)
+        .join("-")}-${total}`;
+      if (pendingRequestRef.current === requestKey) {
+        console.log("Requisição duplicada detectada, ignorando...");
+        return;
+      }
+
+      // CORREÇÃO: Marcar requisição como em andamento
+      pendingRequestRef.current = requestKey;
       setIsProcessing(true);
       setError(null);
 
       try {
+        console.log("Criando pagamento PIX no Mercado Pago...", {
+          itemsCount: items.length,
+          total,
+          userId,
+        });
+
         const requestData: PixRequest = {
           items: items,
           total,
@@ -105,11 +97,16 @@ export const usePixPayment = () => {
           paymentMethodId,
           shippingAddressId,
           email: email || "",
-          type, // Incluir tipo na requisição
+          type,
         };
 
         const response = await mercadoPagoService.createPixQrcode(requestData);
         const { data: responseData } = response;
+
+        console.log("Pagamento PIX criado com sucesso:", {
+          paymentId: responseData.id,
+          status: responseData.status,
+        });
 
         setPixData({
           qrCodeBase64: responseData.qr_code_base64,
@@ -134,11 +131,14 @@ export const usePixPayment = () => {
           axiosError.message ||
           "Erro desconhecido ao gerar pagamento PIX";
 
+        console.error("Erro ao criar pagamento PIX:", errorMessage);
         setError(errorMessage);
         toast.error(`Erro no PIX: ${errorMessage}`);
         setRetryCount((prev) => prev + 1);
       } finally {
         setIsProcessing(false);
+        // CORREÇÃO: Limpar referência da requisição
+        pendingRequestRef.current = null;
       }
     },
     []
@@ -203,7 +203,14 @@ export const usePixPayment = () => {
         if (data.status === "approved") {
           setPaymentStatus("approved");
           toast.success("Pagamento aprovado! Redirecionando...");
-          setTimeout(() => router.push("/payment/success"), 2000);
+
+          const successParams = new URLSearchParams();
+          successParams.append("paymentId", paymentId);
+
+          setTimeout(
+            () => router.push(`/payment/success?${successParams.toString()}`),
+            2000
+          );
         } else if (data.status === "rejected") {
           setPaymentStatus("rejected");
           toast.error("Pagamento rejeitado");
@@ -222,7 +229,7 @@ export const usePixPayment = () => {
   );
 
   return {
-    handleGeneratePix: handleGeneratePixUnified, // Exportar função unificada
+    handleGeneratePix: handleGeneratePixUnified,
     checkPaymentStatus,
   };
 };

@@ -1,15 +1,15 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Item, OrderSummaryProps } from "@/types/pix-interfaces";
+import { Item, OrderSummaryProps, PixItem } from "@/types/pix-interfaces";
 
 export function OrderSummary({ item, subtotal, total }: OrderSummaryProps) {
-  const getItemTitle = (item: Item) => {
-    return item.title || item.product?.title || "Produto sem nome";
+  const getItemTitle = (item: PixItem) => {
+    return item.name || item.name || "Produto sem nome";
   };
 
-  const getItemPrice = (item: Item) => {
-    return item.price || item.product?.price || 0;
+  const getItemPrice = (item: PixItem) => {
+    return item.price || item.price || 0;
   };
 
   return (
@@ -19,7 +19,7 @@ export function OrderSummary({ item, subtotal, total }: OrderSummaryProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3">
-          {item && ( // Only render if item exists
+          {item && (
             <div key={item.id} className="flex justify-between items-center">
               <div>
                 <p className="font-medium">{getItemTitle(item)}</p>

@@ -273,20 +273,24 @@ const CartItemsPage = () => {
     );
   }
 
+  const cartInfor = cartData && cartData.length > 1;
+
   return (
     <div className="w-full max-w-6xl mx-auto p-2 min-h-screen h-full mt-4">
       <div className="pb-3">
         <div className="flex justify-between w-full h-auto pb-2">
           <Title>Meu carrinho</Title>
-          <Button
-            variant="ghost"
-            disabled={isDelete}
-            onClick={handleRemoveAllItem}
-            className="h-auto gap-2 font-semibold"
-            title="Remover todos os items do carrinho!"
-          >
-            <Trash2 size={16} className="text-red-500" /> Deletar Todos
-          </Button>
+          {cartInfor && (
+            <Button
+              variant="ghost"
+              disabled={isDelete}
+              onClick={handleRemoveAllItem}
+              className="h-auto gap-2 font-semibold"
+              title="Remover todos os items do carrinho!"
+            >
+              <Trash2 size={16} className="text-red-500" /> Deletar Todos
+            </Button>
+          )}
         </div>
         <Separator />
       </div>
@@ -296,41 +300,43 @@ const CartItemsPage = () => {
           {/* Lista de Itens */}
           <div className="space-y-8">
             {/* Seção de Endereço */}
-            <section>
-              <div className="flex items-center justify-between mb-4">
-                <Label className="text-lg font-semibold">
-                  Endereço de Entrega
-                </Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full"
-                  onClick={() => router.push("/user/addresses")}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Endereço
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {addresses.map((address) => (
-                  <div
-                    key={address.id}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      shippingAddressId === address.id
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-gray-200 hover:border-gray-300"
-                    } ${address.isDefault ? "ring-1 ring-blue-300" : ""}`}
-                    onClick={() => handleAddressSelect(address.id)}
+            {cartInfor && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="text-lg font-semibold">
+                    Endereço de Entrega
+                  </Label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => router.push("/user/addresses")}
                   >
-                    <AddressInfor
-                      address={address}
-                      shippingAddressId={shippingAddressId}
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Endereço
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {addresses.map((address) => (
+                    <div
+                      key={address.id}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        shippingAddressId === address.id
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                          : "border-gray-200 hover:border-gray-300"
+                      } ${address.isDefault ? "ring-1 ring-blue-300" : ""}`}
+                      onClick={() => handleAddressSelect(address.id)}
+                    >
+                      <AddressInfor
+                        address={address}
+                        shippingAddressId={shippingAddressId}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
           <div className="flex-1">
             {!cartData || cartData.length === 0 ? (
