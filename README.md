@@ -73,8 +73,8 @@ Antes de começar, certifique-se de ter instalado:
 ### 1. Clone o repositório
 
 \`\`\`bash
-git clone https://github.com/seu-usuario/seu-ecommerce.git
-cd seu-ecommerce
+git clone https://github.com/glopmts/e-commerce.git
+cd e-commerce
 \`\`\`
 
 ### 2. Instale as dependências
@@ -272,8 +272,8 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## 👤 Autor
 
 Seu Nome
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- LinkedIn: [seu-perfil](https://linkedin.com/in/seu-perfil)
+- GitHub: [@seu-usuario](https://github.com/glopmts)
+- LinkedIn: [seu-perfil](https://linkedin.com/in/antonio-matias-52695a28a)
 
 ## 🙏 Agradecimentos
 
