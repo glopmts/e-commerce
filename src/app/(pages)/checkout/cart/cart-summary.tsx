@@ -80,10 +80,10 @@ export function CartSummary({
         // Para item único (se implementado)
         else {
           // Aqui você pode adicionar lógica para item único se necessário
-          router.push(`/checkout/type?card`);
+          router.push(`#`);
         }
       } else {
-        router.push(`/checkout/type?card`);
+        router.push(`#`);
       }
     } catch (error) {
       console.error(error);

@@ -12,8 +12,8 @@ import { toast } from "sonner";
 import { CartItem } from "./cart-item";
 import { EmptyCart } from "./empty-cart";
 import { CartSummary } from "./cart-summary";
-import { Label } from "../../../../components/ui/label";
-import AddressInfor from "../../../../components/checkout/address-infor";
+import { Label } from "@/components/ui/label";
+import AddressInfor from "@/components/checkout/address-infor";
 import { useRouter } from "next/navigation";
 
 const CartItemsPage = () => {

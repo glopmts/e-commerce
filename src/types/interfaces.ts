@@ -100,3 +100,47 @@ export interface PaymentMethod {
   description?: string | null;
   icon: string;
 }
+
+
+ export interface ProductPropsDetails {
+       id: string;
+    createdAt: string;
+    productId: string;
+    quantity: number;
+   
+    variantId: string | null;
+    orderId: string;
+    product: {
+        height: number | null;
+        id: string;
+        width: number | null;
+        createdAt: string;
+        updatedAt: string;
+        images: {
+            id: string;
+            createdAt: string;
+            productId: string;
+            url: string;
+            sortOrder: number;
+            altText: string | null;
+            isPrimary: boolean;
+        }[];
+        isActive: boolean;
+        description: string | null;
+        categoryId: string;
+        isFeatured: boolean;
+        thumbnail: string | null;
+        title: string;
+        price: number;
+        stock: number;
+        slug: string;
+        comparePrice: number | null;
+        costPrice: number | null;
+        barcode: string | null;
+        weight: number | null;
+        depth: number | null;
+        content: string;
+        trackStock: boolean;
+    };
+    discountApplied: number | null;
+};

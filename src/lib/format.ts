@@ -5,10 +5,10 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function formatDate(date: string | Date): string {
+export function formatDate  (date: string | null)  {
+  if (!date) return "Não disponível";
   return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
+    dateStyle: "long",
+    timeStyle: "short",
   }).format(new Date(date));
-}
+};

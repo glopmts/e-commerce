@@ -34,7 +34,7 @@ const Links = [
   },
   {
     label: "Compras",
-    href: "/user/purchase",
+    href: "/orders/purchase",
     icon: ShoppingCart,
   },
 ];
@@ -189,7 +189,7 @@ const MenuDropdown = ({ user, handleSignOut }: DropdownProps) => {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Link href="/user/purchase" className="flex items-center gap-1.5">
+          <Link href="/orders/purchase" className="flex items-center gap-1.5">
             <ShoppingCart size={20} />
             Minhas compras
           </Link>

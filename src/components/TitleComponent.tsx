@@ -45,7 +45,6 @@ const Title = ({
     ${color}
     ${aligns[align]}
     leading-tight
-    mb-4
   `;
 
   return createElement(
